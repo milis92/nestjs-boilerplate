@@ -10,12 +10,7 @@ import { CacheHealthCheckIndicator } from '@/infra/cache/cache.health';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpCacheInterceptor } from '@/infra/cache/cache.interceptor';
 
-/**
- * Creates a Redis client configured for caching operations.
- *
- * @param redisConfig - The Redis configuration containing connection details
- * @returns A configured Redis client instance for the cache store
- */
+/** Creates Redis connection options for the cache store from the application's Redis config. */
 const redisCacheClient = (redisConfig: RedisConfig) =>
   createClient({
     name: 'cache',
@@ -65,22 +60,19 @@ const redisCacheClient = (redisConfig: RedisConfig) =>
  *
  * ### Usage
  *
- * Caching is automatically applied to GET requests via `HttpCacheInterceptor`.
- * Use the `@NoCache()` decorator to disable caching for specific routes.
+ * **Query-level caching:** Drizzle ORM caches all queries automatically via
+ * `DrizzleCacheStore`, with auto-invalidation on mutations. No decorator needed.
+ *
+ * **HTTP-level caching:** Opt-in only. Use `@HttpCache()` on unauthenticated
+ * public endpoints. Authenticated requests are never cached at the HTTP level.
  *
  * @example
  * ```typescript
- * // Caching is enabled by default for GET requests
- * @Get('data')
- * getData() {
- *   return this.service.getData();
- * }
- *
- * // Disable caching for a specific route
- * @Get('realtime')
- * @NoCache()
- * getRealtimeData() {
- *   return this.service.getRealtimeData();
+ * // Public endpoint with HTTP caching
+ * @Get('public-stats')
+ * @HttpCache()
+ * getPublicStats() {
+ *   return this.statsService.getPublicStats();
  * }
  * ```
  */

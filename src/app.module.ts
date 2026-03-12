@@ -1,40 +1,31 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConditionalModule, ConfigModule } from '@nestjs/config';
 import { GracefulShutdownModule } from '@tygra/nestjs-graceful-shutdown';
-import { LoggerModule } from 'nestjs-pino';
-import { HealthModule } from './health/health.module';
-import { CacheModule } from './infra/cache/cache.module';
-import { DatabaseModule } from './infra/database/database.module';
-import applicationConfig, { AppConfig } from '@/config/app.config';
-import loggerFactory from '@/tools/logger';
-import { RateLimiterModule } from '@/infra/rate_limiter/rate_limiter.module';
-import { AuthModule } from '@/infra/auth/auth.module';
-import docsConfig from '@/config/docs.config';
-import { GraphqlModule } from '@/infra/graphql/graphql.module';
+import { HealthModule } from '@/tools/health/health.module';
+import applicationConfig, { Environment } from '@/config/app.config';
+import { AppLoggerModule } from '@/tools/logger/logger.module';
+import { OpenapiModule } from '@/tools/openapi/openapi.module';
+import { FeaturesModule } from '@/domain/features.module';
+import { InfraModule } from '@/infra/infra.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [applicationConfig, docsConfig],
+      load: [applicationConfig],
       expandVariables: true,
       skipProcessEnv: true,
       cache: true,
       isGlobal: true,
     }),
     GracefulShutdownModule.forRoot(),
-    LoggerModule.forRootAsync({
-      inject: [applicationConfig.KEY],
-      useFactory: (applicationConfig: AppConfig) =>
-        loggerFactory(
-          applicationConfig.logLevel,
-          applicationConfig.logCollector,
-        ),
-    }),
-    DatabaseModule,
-    RateLimiterModule,
-    CacheModule,
-    AuthModule,
-    GraphqlModule,
+    AppLoggerModule,
+    InfraModule,
+    FeaturesModule,
+    ConditionalModule.registerWhen(
+      OpenapiModule,
+      (env: NodeJS.ProcessEnv) =>
+        env['NODE_ENV'] !== Environment.Production,
+    ),
     HealthModule,
   ],
 })

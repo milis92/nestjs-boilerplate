@@ -11,6 +11,7 @@ import { Cache } from '@nestjs/cache-manager';
 export class CacheHealthCheckIndicator {
   constructor(private readonly cacheManager: Cache) {}
 
+  /** Returns true if the Redis cache store responds to a ping. */
   async isHealthy(): Promise<boolean> {
     return await this.cacheManager
       .set('health', true)

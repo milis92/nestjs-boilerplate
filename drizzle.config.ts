@@ -1,8 +1,8 @@
 import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
-  schema: './src/**/schema.ts',
-  out: './drizzle',
+  schema: './src/infra/drizzle/schema.ts',
+  out: './.database',
   dialect: 'postgresql',
   dbCredentials: {
     host: process.env.POSTGRES_HOST || 'localhost',
@@ -19,6 +19,9 @@ export default defineConfig({
           }
         : false,
   },
+  strict: true,
+  schemaFilter: ['public'],
+  introspect: {
+    casing: 'camel',
+  },
 });
-
-

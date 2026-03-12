@@ -9,12 +9,13 @@ import {
 } from '@nestjs/terminus';
 import { CacheHealthCheckIndicator } from '@/infra/cache/cache.health';
 import { RateLimiterHealthCheckIndicator } from '@/infra/rate_limiter/rate_limiter.health';
-import { DatabaseHealthCheckIndicator } from '@/infra/database/database.health';
+import { DrizzleHealthCheckIndicator } from '@/infra/drizzle/drizzle.health';
 import { GraphqlHealthCheckIndicator } from '@/infra/graphql/graphql.health';
 import { AuthHealthCheckIndicator } from '@/infra/auth/auth.health';
 import { AuthAllowAnonymous } from '@/infra/auth/auth.decorators';
-import { NoCache } from '@/infra/cache/cache.decorators';
+import { ApiExcludeController } from '@nestjs/swagger';
 
+@ApiExcludeController(true)
 @Controller('health')
 export class HealthController {
   constructor(
@@ -27,14 +28,13 @@ export class HealthController {
 
     private readonly cache: CacheHealthCheckIndicator,
     private readonly rateLimiter: RateLimiterHealthCheckIndicator,
-    private readonly database: DatabaseHealthCheckIndicator,
+    private readonly database: DrizzleHealthCheckIndicator,
     private readonly graphql: GraphqlHealthCheckIndicator,
     private readonly auth: AuthHealthCheckIndicator,
   ) {}
 
   @AuthAllowAnonymous()
   @Get()
-  @NoCache()
   @HealthCheck({
     noCache: true,
     swaggerDocumentation: true,
@@ -58,13 +58,8 @@ export class HealthController {
           this.database.isHealthy(),
         ),
       () =>
-        this.checkService('graphql', () =>
-          this.graphql.isHealthy(),
-        ),
-      () =>
-        this.checkService('auth', () =>
-          this.auth.isHealthy(),
-        ),
+        this.checkService('graphql', () => this.graphql.isHealthy()),
+      () => this.checkService('auth', () => this.auth.isHealthy()),
     ]);
   }
 

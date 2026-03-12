@@ -14,13 +14,12 @@ import {
 } from '@/infra/auth/auth.decorators';
 import type { Request, Response } from 'express';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { NoCache } from '@/infra/cache/cache.decorators';
 import { hours, SkipThrottle, Throttle } from '@nestjs/throttler';
 
 /**
  * Controller that handles all BetterAuth authentication endpoints.
  * Acts as a pass-through to the BetterAuth handler, forwarding all requests
- * under the /auth/* path to the underlying authentication service.
+ * under the /betterAuth/* path to the underlying authentication service.
  */
 @ApiExcludeController(true)
 @Controller('auth')
@@ -29,7 +28,6 @@ export class AuthController {
 
   @Get('open-api/*path')
   @SkipThrottle()
-  @NoCache()
   @AuthAllowAnonymous()
   @Version(VERSION_NEUTRAL)
   async getOpenApi(
@@ -41,7 +39,7 @@ export class AuthController {
 
   /**
    * Catch-all handler that forwards all authentication requests to BetterAuth.
-   * Handles all HTTP methods (GET, POST, etc.) for any path under /auth/*.
+   * Handles all HTTP methods (GET, POST, etc.) for any path under /betterAuth/*.
    *
    * Rate limiter is applied to prevent brute-force attacks.
    * Caching is disabled to ensure a fresh authentication state.
@@ -53,7 +51,6 @@ export class AuthController {
    * @param res - The Express response object for sending the response
    */
   @All('*path')
-  @NoCache()
   @AuthOptional()
   @Version(VERSION_NEUTRAL)
   @Throttle({

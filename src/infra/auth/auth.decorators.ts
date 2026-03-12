@@ -40,7 +40,7 @@ export const AuthAllowAnonymous = () =>
  * }
  * ```
  */
-export const OPTIONAL_AUTH = 'optional-auth';
+export const OPTIONAL_AUTH = 'optional-betterAuth';
 export const AuthOptional = () => SetMetadata(OPTIONAL_AUTH, true);
 
 type UserSessionType = NonNullable<
@@ -116,5 +116,39 @@ export const AuthSession = createParamDecorator(
     if (data === 'headers') return request.headers;
 
     return session?.[data] ?? null;
+  },
+);
+
+/**
+ * The authenticated user's data from the BetterAuth session.
+ */
+export type AuthUser = UserSessionType['user'];
+
+/**
+ * Parameter decorator that extracts the authenticated user from the request session.
+ * Shorthand for `@AuthSession('user')`.
+ *
+ * @example
+ * ```typescript
+ * @Get()
+ * findAll(@CurrentUser() user: AuthUser) {
+ *   return this.service.findAll(user.id);
+ * }
+ * ```
+ */
+export const CurrentUser = createParamDecorator(
+  (_data: unknown, context: ExecutionContext) => {
+    const contextType = context.getType<'http' | 'graphql'>();
+
+    let request: ReqWithSession;
+
+    if (contextType === 'graphql') {
+      const gqlCtx = GqlExecutionContext.create(context);
+      request = gqlCtx.getContext<{ req: ExpressRequest }>()?.req;
+    } else {
+      request = context.switchToHttp().getRequest();
+    }
+
+    return request?.session?.user ?? null;
   },
 );

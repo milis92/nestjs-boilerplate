@@ -398,4 +398,4 @@ Temporary Items
 dist
 .webpack
 .serverless/**/*.zip
-/.jest-cache/
+/docs/

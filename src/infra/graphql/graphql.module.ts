@@ -38,7 +38,10 @@ import { GraphqlResolver } from '@/infra/graphql/graphql.resolver';
         sortSchema: true,
         autoTransformHttpErrors: true,
         installSubscriptionHandlers: true,
-        context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
+        context: ({ req, res }: { req: unknown; res: unknown }) => ({
+          req,
+          res,
+        }),
       }),
     }),
   ],

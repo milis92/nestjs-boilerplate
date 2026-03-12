@@ -11,6 +11,7 @@ import { RedisOptions } from 'ioredis/built/redis/RedisOptions';
 import { APP_GUARD } from '@nestjs/core';
 import { RateLimiterGuard } from '@/infra/rate_limiter/rate_limiter.guard';
 
+/** Creates Redis connection options for the rate limiter store from the application's Redis config. */
 const redisRateLimiterClient = (
   redis: RedisConfig,
 ): RedisOptions => ({

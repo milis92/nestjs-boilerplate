@@ -63,8 +63,12 @@ export class AuthGuard implements CanActivate {
       headers: fromNodeHeaders(request?.headers),
     });
 
-    (request as any)['session'] = session;
-    (request as any)['user'] = session?.user;
+    // Attach session and user to request for downstream consumers
+    // These are accessed dynamically by decorators, so we need to bypass strict typing
+    const extendedRequest = request as ExpressRequest &
+      Record<string, unknown>;
+    extendedRequest.session = session;
+    extendedRequest.user = session?.user;
 
     const isOptional = this.reflector.getAllAndOverride<boolean>(
       OPTIONAL_AUTH,

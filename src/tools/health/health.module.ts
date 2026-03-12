@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { HealthController } from '@/health/health.controller';
+import { HealthController } from '@/tools/health/health.controller';
 import { CacheModule } from '@/infra/cache/cache.module';
 import { RateLimiterModule } from '@/infra/rate_limiter/rate_limiter.module';
-import { DatabaseModule } from '@/infra/database/database.module';
+import { DrizzleModule } from '@/infra/drizzle/drizzle.module';
 import { GraphqlModule } from '@/infra/graphql/graphql.module';
 
 /**
@@ -31,7 +31,7 @@ import { GraphqlModule } from '@/infra/graphql/graphql.module';
     }),
     CacheModule,
     RateLimiterModule,
-    DatabaseModule,
+    DrizzleModule,
     GraphqlModule,
   ],
   controllers: [HealthController],
