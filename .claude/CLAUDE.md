@@ -51,7 +51,7 @@ pnpm format                 # Prettier formatting
 - Centralized DB schema in `src/infra/drizzle/` (schema.ts, relations.ts, types.ts)
 - BetterAuth for authentication — `@CurrentUser()` decorator extracts `AuthUser`, global auth guard
 - Global ValidationPipe — validation errors return **422** (not 400)
-- L1/L2 caching (memory + Redis) — `@NoCache()` to bypass
+- L1/L2 caching (memory + Redis) — `@HttpCache()` to enable HTTP-level response caching on specific routes
 - Global rate limiting via Redis — `@SkipThrottle()` to bypass
 
 ## Testing

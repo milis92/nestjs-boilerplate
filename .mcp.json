@@ -1,15 +1,12 @@
 {
   "mcpServers": {
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
-    },
     "postgres": {
       "command": "npx",
-      "args": ["-y", "@anthropic/mcp-postgres"],
-      "env": {
-        "POSTGRES_CONNECTION_STRING": "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@${POSTGRES_HOST:-localhost}:${POSTGRES_PORT:-5431}/${POSTGRES_DB:-api}"
-      }
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@${POSTGRES_HOST:-localhost}:${POSTGRES_PORT:-5431}/${POSTGRES_DB:-api}"
+      ]
     }
   }
 }
