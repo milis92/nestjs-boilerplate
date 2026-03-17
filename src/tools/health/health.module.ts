@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
+import { DiscoveryModule } from '@nestjs/core';
 import { TerminusModule } from '@nestjs/terminus';
+
 import { HealthController } from '@/tools/health/health.controller';
-import { CacheModule } from '@/infra/cache/cache.module';
-import { RateLimiterModule } from '@/infra/rate_limiter/rate_limiter.module';
-import { DrizzleModule } from '@/infra/drizzle/drizzle.module';
-import { GraphqlModule } from '@/infra/graphql/graphql.module';
+import { HealthDiscoveryService } from '@/tools/health/health-discovery.service';
 
 /**
  * Module that provides health check endpoints for monitoring application status.
@@ -17,8 +16,10 @@ import { GraphqlModule } from '@/infra/graphql/graphql.module';
  *
  * ### Health Checks Included
  *
- * The module imports health indicators from various infrastructure modules:
-
+ * Health indicators are auto-discovered at startup. Any provider decorated with
+ * `@RegisterHealthIndicator('name')` and implementing the `HealthIndicator`
+ * interface will be included automatically.
+ *
  * ### Terminus Integration
  *
  * Uses `@nestjs/terminus` with pretty error logging for clear, readable
@@ -29,11 +30,9 @@ import { GraphqlModule } from '@/infra/graphql/graphql.module';
     TerminusModule.forRoot({
       errorLogStyle: 'pretty',
     }),
-    CacheModule,
-    RateLimiterModule,
-    DrizzleModule,
-    GraphqlModule,
+    DiscoveryModule,
   ],
+  providers: [HealthDiscoveryService],
   controllers: [HealthController],
 })
 export class HealthModule {}

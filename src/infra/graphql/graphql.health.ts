@@ -2,13 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { GraphQLSchemaHost } from '@nestjs/graphql';
 import { graphql } from 'graphql/graphql';
 
+import {
+  type HealthIndicator,
+  RegisterHealthIndicator,
+} from '@/tools/health/health.indicator';
+
 /**
  * Health check indicator for the GraphQL module.
  *
  * Verifies that the GraphQL schema is properly compiled and available.
  */
 @Injectable()
-export class GraphqlHealthCheckIndicator {
+@RegisterHealthIndicator('graphql')
+export class GraphqlHealthCheckIndicator implements HealthIndicator {
   constructor(private readonly schemaHost: GraphQLSchemaHost) {}
 
   /**

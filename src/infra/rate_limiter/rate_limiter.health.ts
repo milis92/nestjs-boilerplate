@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { seconds } from '@nestjs/throttler';
 import { ThrottlerStorage } from '@nestjs/throttler/dist/throttler-storage.interface';
 
+import {
+  type HealthIndicator,
+  RegisterHealthIndicator,
+} from '@/tools/health/health.indicator';
+
 /**
  * Health check indicator for the rate limiting system.
  *
@@ -10,7 +15,8 @@ import { ThrottlerStorage } from '@nestjs/throttler/dist/throttler-storage.inter
  * request counts across application instances.
  */
 @Injectable()
-export class RateLimiterHealthCheckIndicator {
+@RegisterHealthIndicator('throttler')
+export class RateLimiterHealthCheckIndicator implements HealthIndicator {
   constructor(private readonly throttler: ThrottlerStorage) {}
 
   /**
@@ -24,7 +30,7 @@ export class RateLimiterHealthCheckIndicator {
   async isHealthy(): Promise<boolean> {
     return await this.throttler
       .increment('health', seconds(0), 1000, 0, 'health')
-      .catch(() => false)
-      .then(() => true);
+      .then(() => true)
+      .catch(() => false);
   }
 }
