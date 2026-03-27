@@ -26,7 +26,9 @@ export class TestApplicationContext {
   ) {}
 
   static async create(): Promise<TestApplicationContext> {
-    const ctx = await TestModuleBuilder.create(TestAppModule.forRoot());
+    const ctx = await TestModuleBuilder.create(
+      TestAppModule.forRoot(),
+    );
 
     const app = ctx.moduleRef.createNestApplication();
 
@@ -53,7 +55,8 @@ export class TestApplicationContext {
     const effectiveHeaders =
       headers === null
         ? undefined
-        : (headers ?? (await this.auth.getAuthHeaders(defaultUserId)));
+        : (headers ??
+          (await this.auth.getAuthHeaders(defaultUserId)));
     return request.agent(server).set(effectiveHeaders ?? {});
   }
 

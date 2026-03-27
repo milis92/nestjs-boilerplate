@@ -11,6 +11,8 @@ import { TestDrizzleModule } from '@/infra/drizzle/stubs/test-drizzle.module';
 import { TestCacheModule } from '@/infra/cache/stubs/test-cache.module';
 import { TestAuthModule } from '@/infra/auth/stubs/test-auth.module';
 import { TestAuthContext } from '@/infra/auth/stubs/test-user.factory';
+import { TestLlmModule } from '@/infra/llm/stubs/test-llm.module';
+import { TestQueueModule } from '@/infra/queue/stubs/test-queue.module';
 
 export { type PostgresConnectionConfig } from '@/infra/drizzle/stubs/test-drizzle.module';
 
@@ -34,6 +36,11 @@ export class TestModuleContext {
   }
 }
 
+export interface ProviderOverride {
+  token: unknown;
+  useValue: unknown;
+}
+
 export class TestModuleBuilder {
   static async create(
     module:
@@ -41,17 +48,29 @@ export class TestModuleBuilder {
       | DynamicModule
       | Promise<DynamicModule>
       | ForwardReference,
+    overrides?: ProviderOverride[],
   ): Promise<TestModuleContext> {
     const config = inject('POSTGRES_CONNECTION_CONFIG');
+    const redisConfig = inject('REDIS_CONNECTION_CONFIG');
 
-    const moduleRef = await Test.createTestingModule({
+    let builder = Test.createTestingModule({
       imports: [
         TestCacheModule,
+        TestLlmModule,
         TestDrizzleModule.forRoot(config),
         TestAuthModule.forRoot(config),
+        TestQueueModule.forRoot(redisConfig),
         module,
       ],
-    }).compile();
+    });
+
+    for (const override of overrides ?? []) {
+      builder = builder
+        .overrideProvider(override.token)
+        .useValue(override.useValue);
+    }
+
+    const moduleRef = await builder.compile();
 
     return new TestModuleContext(moduleRef);
   }

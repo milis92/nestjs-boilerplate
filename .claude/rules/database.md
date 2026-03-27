@@ -5,9 +5,9 @@ paths:
 
 # Database Layer (Drizzle ORM)
 
-All Drizzle ORM schema definitions, relations, and typed exports are centralized in `src/infra/drizzle/`.
+All Drizzle ORM schema definitions, relations, and typed exports are in `src/infra/drizzle/`.
 
-## Mandatory Directory structure
+## Directory structure
 
 ```
 src/infra/drizzle/
@@ -78,7 +78,7 @@ export const relations = defineRelations(schema, (r) => ({
 
 ### Naming conventions
 
-Name relation properties in **singular** for one-relations and **plural** for many-relations (`account`, `tags`).
+Name relation properties in **singular** for one-relations and **plural** for many-relations (`foo`, `bars`).
 
 ## Types (`types.ts`)
 
@@ -96,10 +96,9 @@ export type NewWidgetRow = typeof schema.widgets.$inferInsert;
 
 ## Soft deletes
 
-Only use `archivedAt: timestamp('archived_at', { withTimezone: true })` when the domain requires it. Most entities use hard deletes.
+Only use `archivedAt: timestamp('archived_at', { withTimezone: true })` when the domain requires it.
 
 ## Anti-patterns
 
-- Do not edit generated migration files.
-- Do not define tables or relations outside of `src/infra/drizzle/` — all schemas are centralized.
-- Do not define relations in the schema file — keep them in `relations.ts`.
+- NEVER edit generated migration files.
+- Avoid writing raw SQL when writing Drizzle ORM queries.

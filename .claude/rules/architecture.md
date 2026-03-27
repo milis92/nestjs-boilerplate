@@ -34,17 +34,10 @@ src/domain/<feature>/
 - File: `<feature>.module.ts`
 - Class: `<Features>Module` (plural + "Module")
 
-## Module wiring
-
-Key points:
-
-- Services inject the global `DrizzleDatabase` via `@InjectDrizzle()`
-- The service is always exported, so other modules can depend on it.
-
 ### Cross-module dependencies
 
 - One domain module CAN depend on another domain module by importing its NestJS module and injecting its exported service.
-- Infrastructure modules (`src/infra/`) provide cross-cutting concerns. 
+- Infrastructure modules (`src/infra/`) provide cross-cutting concerns.
 - Domain modules import from infra via `@/infra/...`.
 - Infra modules never import from domain.
 
@@ -68,5 +61,5 @@ Cross-domain code lives in `src/domain/shared/`:
 
 ## Anti-patterns
 
-- Do not access the database from controllers or resolvers.
-- Do not create circular module dependencies.
+- NEVER access the database from controllers or resolvers.
+- NEVER access create circular module dependencies.

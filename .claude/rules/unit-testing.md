@@ -6,8 +6,6 @@ paths:
 # Unit Testing
 
 Unit tests verify service logic using real PostgreSQL via Testcontainers. No mocks, no test doubles for the database.
-Controller/resolver tests are not needed — they are thin delegation layers covered by service specs (logic) and E2E
-specs (HTTP/GraphQL stack).
 
 ## Mandatory Directory structure
 
@@ -43,7 +41,7 @@ Key setup rules:
 ### Test utilities
 
 - `TestModuleBuilder.create(Module)` — bootstraps isolated NestJS module with Testcontainers (no HTTP server, no infra
-  modules)
+  modules). Auto-provisions Redis via Testcontainers for BullMQ queue tests. Optional `overrides` array allows replacing specific providers: `[{ token: SomeService, useValue: mockInstance }]`.
 - `ctx.get(Token)` — resolve any provider from the compiled module
 - `ctx.database` — DrizzleDatabase for test data setup/teardown
 - `ctx.auth.defaultUserId()` — returns the default test user ID (async, creates on first call)
@@ -57,14 +55,39 @@ Use factory functions from domain-specific `stubs/` directories. Each factory in
 accepts partial overrides. Path pattern: `@/domain/<feature>/stubs/test-<feature>.factory`.
 
 ```typescript
-import {createTestAccount} from '@/domain/accounts/stubs/test-account.factory';
-import {createTestMerchant} from '@/domain/merchants/stubs/test-merchant.factory';
+import {createTestWidget} from '@/domain/widgets/stubs/test-widget.factory';
+import {createTestFoo} from '@/domain/foos/stubs/test-foo.factory';
 
-const account = await createTestAccount(ctx.database, testUserId);
-const merchant = await createTestMerchant(ctx.database, testUserId, {name: 'Custom'});
+const widget = await createTestWidget(ctx.database, testUserId);
+const foo = await createTestFoo(ctx.database, testUserId, {name: 'Custom'});
 ```
 
-Factories do NOT auto-create dependencies. If a transaction needs an account, create the account first.
+Factories do NOT auto-create dependencies. If a widget needs a foo, create the foo first.
+
+#### Factory function signature
+
+```typescript
+export async function createTestFoo(
+  db: DrizzleDatabase,
+  ownerId: UserId,
+  overrides: Partial<NewFooRow> = {},
+) {
+  const [row] = await db
+    .insert(foos)
+    .values({
+      ownerId,
+      name: 'Test Foo',
+      // ...sensible defaults for all required fields
+      ...overrides,
+    })
+    .returning();
+  return row;
+}
+```
+
+- Returns the raw database row (not a domain model)
+- Uses `NewFooRow` (insert type from `@/infra/drizzle/types`) for overrides
+- Defaults should produce a valid row without any overrides
 
 ## Test structure
 
@@ -73,15 +96,12 @@ Use nested `describe` blocks with the `given/when/then` pattern:
 ```typescript
 describe('methodName', () => {
     describe('given no existing entities', () => {
-        it('returns empty array', async () => { /* ... */
-        });
+        it('returns empty array', async () => { /* ... */});
     });
 
     describe('given existing entities', () => {
-        it('returns all entities ordered by name', async () => { /* ... */
-        });
-        it('only returns entities for the specified owner', async () => { /* ... */
-        });
+        it('returns all entities ordered by name', async () => { /* ... */});
+        it('only returns entities for the specified owner', async () => { /* ... */});
     });
 });
 ```
@@ -89,6 +109,3 @@ describe('methodName', () => {
 ## Anti-patterns
 
 - Do not use `vi.mock()` or `vi.fn()` for database or service dependencies.
-- Do not create manual mock implementations of services.
-- Do not test private methods directly.
-- Do not assert on exact timestamps — assert on type (`toBeInstanceOf(Date)`) or existence (`toBeDefined()`).

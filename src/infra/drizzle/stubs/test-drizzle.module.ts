@@ -47,7 +47,10 @@ export class TestDrizzleModule implements OnModuleDestroy {
         {
           provide: DRIZZLE_DB,
           inject: [Pool, Cache],
-          useFactory: (pool: Pool, cacheManager: Cache): DrizzleDatabase =>
+          useFactory: (
+            pool: Pool,
+            cacheManager: Cache,
+          ): DrizzleDatabase =>
             drizzle({
               client: pool,
               schema,

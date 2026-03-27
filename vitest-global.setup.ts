@@ -1,27 +1,90 @@
-import fs from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { Pool, PoolConfig } from 'pg';
 import type { TestProject } from 'vitest/node';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { getMigrations } from 'better-auth/db/migration';
 
 import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql';
+import {
+  RedisContainer,
+  StartedRedisContainer,
+} from '@testcontainers/redis';
+
+import {
+  AUTH_SCHEMA_NAME,
+  createBetterAuth,
+} from '@/infra/auth/auth.factory';
+
+const DATABASE_DIR = '.database';
+const PUBLIC_MIGRATIONS_DIR = join(DATABASE_DIR, 'public');
+const INIT_SQL_PATH = join(DATABASE_DIR, 'init-db.sql');
 
 let container: StartedPostgreSqlContainer;
+let redisContainer: StartedRedisContainer;
+
+/**
+ * Creates the `auth` schema, then uses BetterAuth's runtime
+ * `compileMigrations()` to generate and apply auth DDL — no
+ * committed migration files required.
+ */
+async function migrateAuth(poolConfig: PoolConfig): Promise<void> {
+  const pool = new Pool(poolConfig);
+  try {
+    const initSql = readFileSync(INIT_SQL_PATH, 'utf-8');
+    await pool.query(initSql);
+  } finally {
+    await pool.end();
+  }
+
+  const authPool = new Pool({
+    ...poolConfig,
+    options: `-c search_path=${AUTH_SCHEMA_NAME}`,
+  });
+  try {
+    const auth = createBetterAuth({
+      database: authPool,
+      secret: process.env.AUTH_SECRET ?? 'test-secret',
+      baseUrl: process.env.AUTH_BASE_URL ?? 'http://localhost:3000',
+      trustedOrigins: process.env.AUTH_TRUSTED_ORIGINS?.split(',') ?? [
+        'http://localhost:3000',
+      ],
+    });
+    const { compileMigrations } = await getMigrations(auth.options);
+    const sql = await compileMigrations();
+    if (sql) {
+      await authPool.query(sql);
+    }
+  } finally {
+    await authPool.end();
+  }
+}
+
+/**
+ * Applies public-schema migrations from committed Drizzle
+ * migration files in `.database/public/`.
+ */
+async function migratePublic(poolConfig: PoolConfig): Promise<void> {
+  const pool = new Pool(poolConfig);
+  try {
+    const db = drizzle({ client: pool });
+    await migrate(db, { migrationsFolder: PUBLIC_MIGRATIONS_DIR });
+  } finally {
+    await pool.end();
+  }
+}
 
 /**
  * Vitest global setup that provisions a PostgreSQL testcontainer
  * shared across all test files in a single vitest run.
  *
- * All SQL files from `.database/` are copied into the container's
- * `/docker-entrypoint-initdb.d/` directory so PostgreSQL executes them
- * automatically on startup (alphabetical order):
- *   1. `00_init-db.sql`  — base schema / extensions
- *   2. `{timestamp}_{name}.sql` — Drizzle migrations, sorted by timestamp
- *
- * The resulting connection string is provided to test files via
- * `project.provide('connectionString', ...)`.
+ * Starts an empty PostgreSQL container, then applies migrations:
+ * - Auth schema via BetterAuth's compileMigrations() (runtime)
+ * - Public schema via Drizzle's migrate() (committed migration files)
  */
 export async function setup(project: TestProject) {
   // Guard against duplicate invocations (vitest may call setup per project)
@@ -29,73 +92,42 @@ export async function setup(project: TestProject) {
     return;
   }
 
-  // Collect all .sql files to copy into the container's init directory.
-  // init-db.sql is prefixed with 00_ to guarantee it runs first.
-  const migrationsDir = join(__dirname, '.database');
-  const sqlFiles: { source: string; target: string }[] = [
-    {
-      source: join(migrationsDir, 'init-db.sql'),
-      target: '/docker-entrypoint-initdb.d/00_init-db.sql',
-    },
-  ];
-
-  // Discover migration folders (e.g. 20260305154054_high_oracle/)
-  // and map each migration.sql to a flat file named after the folder.
-  // BetterAuth migrations (_better-auth suffix) are prefixed with 01_
-  // so they run right after init-db.sql and before Drizzle migrations,
-  // since Drizzle FKs reference auth.user which BetterAuth creates.
-  const folders = fs
-    .readdirSync(migrationsDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name)
-    .sort();
-
-  const tempFiles: string[] = [];
-  for (const folder of folders) {
-    const sqlPath = join(migrationsDir, folder, 'migration.sql');
-    if (fs.existsSync(sqlPath)) {
-      const isBetterAuth = folder.endsWith('_better-auth');
-      const targetName = isBetterAuth ? `01_${folder}.sql` : `${folder}.sql`;
-
-      let source = sqlPath;
-      if (isBetterAuth) {
-        // BetterAuth generates SQL without schema qualifiers.
-        // Prepend SET search_path so tables are created in the auth schema.
-        const tempPath = join(tmpdir(), `${folder}.sql`);
-        const sql = fs.readFileSync(sqlPath, 'utf-8');
-        fs.writeFileSync(tempPath, `SET search_path TO auth;\n\n${sql}`);
-        source = tempPath;
-        tempFiles.push(tempPath);
-      }
-
-      sqlFiles.push({
-        source,
-        target: `/docker-entrypoint-initdb.d/${targetName}`,
-      });
-    }
-  }
-
   container = await new PostgreSqlContainer('postgres:latest')
     .withDatabase(process.env.POSTGRES_DB ?? 'test_db')
     .withUsername(process.env.POSTGRES_USER ?? 'test')
     .withPassword(process.env.POSTGRES_PASSWORD ?? 'test')
-    .withCopyFilesToContainer(sqlFiles)
     .start();
 
-  for (const tempFile of tempFiles) {
-    fs.unlinkSync(tempFile);
-  }
+  const poolConfig: PoolConfig = {
+    host: container.getHost(),
+    port: container.getMappedPort(5432),
+    database: container.getDatabase(),
+    user: container.getUsername(),
+    password: container.getPassword(),
+    ssl: false,
+  };
+
+  await migrateAuth(poolConfig);
+  await migratePublic(poolConfig);
 
   project.provide('POSTGRES_CONNECTION_CONFIG', {
     POSTGRES_USER: container.getUsername(),
     POSTGRES_PASSWORD: container.getPassword(),
     POSTGRES_HOST: container.getHost(),
     POSTGRES_PORT: container.getMappedPort(5432),
-    POSTGRES_DB: container.getDatabase()
+    POSTGRES_DB: container.getDatabase(),
+  });
+
+  redisContainer = await new RedisContainer('redis:latest').start();
+
+  project.provide('REDIS_CONNECTION_CONFIG', {
+    host: redisContainer.getHost(),
+    port: redisContainer.getMappedPort(6379),
   });
 }
 
 export async function teardown() {
+  await redisContainer?.stop();
   await container?.stop();
 }
 
@@ -107,6 +139,10 @@ declare module 'vitest' {
       POSTGRES_HOST: string;
       POSTGRES_PORT: number;
       POSTGRES_DB: string;
+    };
+    REDIS_CONNECTION_CONFIG: {
+      host: string;
+      port: number;
     };
   }
 }

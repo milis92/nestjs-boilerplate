@@ -68,6 +68,13 @@ export class RedisConfig {
   @Max(15)
   rateLimiterDatabase: number = 1;
 
+  @Expose({ name: 'REDIS_QUEUE_DB' })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(15)
+  queueDatabase: number = 2;
+
   @Expose({ name: 'REDIS_CONNECT_TIMEOUT' })
   @IsNumber()
   @IsOptional()

@@ -7,8 +7,12 @@ export class TestAuthContext {
 
   constructor(private readonly testHelpers: TestHelpers) {}
 
-  static async from(auth: BetterAuthInstance): Promise<TestAuthContext> {
-    const { test } = (await auth.$context) as unknown as { test: TestHelpers };
+  static async from(
+    auth: BetterAuthInstance,
+  ): Promise<TestAuthContext> {
+    const { test } = (await auth.$context) as unknown as {
+      test: TestHelpers;
+    };
     return new TestAuthContext(test);
   }
 
@@ -32,7 +36,9 @@ export class TestAuthContext {
     await this.testHelpers.deleteUser(userId);
   }
 
-  async getAuthHeaders(userId: UserId): Promise<Record<string, string>> {
+  async getAuthHeaders(
+    userId: UserId,
+  ): Promise<Record<string, string>> {
     const headers = await this.testHelpers.getAuthHeaders({ userId });
     const result: Record<string, string> = {};
     headers.forEach((value, key) => {

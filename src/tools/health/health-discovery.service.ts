@@ -1,4 +1,8 @@
-import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  type OnModuleInit,
+} from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
 
 import {
@@ -17,18 +21,26 @@ export class HealthDiscoveryService implements OnModuleInit {
   onModuleInit(): void {
     const providers = this.discovery.getProviders();
     for (const wrapper of providers) {
-      const instance = wrapper.instance;
+      const instance = wrapper.instance as Record<
+        string,
+        unknown
+      > | null;
       if (!instance) continue;
 
       const name = Reflect.getMetadata(
         HEALTH_INDICATOR_KEY,
-        instance.constructor,
+        (instance as object).constructor,
       ) as string | undefined;
       if (name) {
         if (this._indicators.has(name)) {
-          throw new Error(`Duplicate health indicator name: "${name}"`);
+          throw new Error(
+            `Duplicate health indicator name: "${name}"`,
+          );
         }
-        this._indicators.set(name, instance as HealthIndicator);
+        this._indicators.set(
+          name,
+          instance as unknown as HealthIndicator,
+        );
       }
     }
 

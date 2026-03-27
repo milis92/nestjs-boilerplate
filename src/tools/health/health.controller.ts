@@ -31,12 +31,6 @@ export class HealthController {
   })
   check() {
     return this.health.check([
-      // Enable if you want disk health check
-      // () =>
-      //   this.disk.checkStorage('storage', {
-      //     path: '/',
-      //     thresholdPercent: 0.5,
-      //   }),
       () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
       ...[...this.healthDiscovery.indicators].map(
         ([name, indicator]) =>

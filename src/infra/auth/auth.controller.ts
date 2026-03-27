@@ -34,7 +34,8 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    return await this.authService.handler(req, res);
+    await this.authService.handler(req, res);
+    if (!res.writableEnded) res.end();
   }
 
   /**

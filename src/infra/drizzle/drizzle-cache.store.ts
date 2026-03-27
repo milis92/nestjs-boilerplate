@@ -39,7 +39,8 @@ export class DrizzleCacheStore extends Cache {
     config?: CacheConfig,
   ): Promise<void> {
     const ttl =
-      config?.px ?? (config?.ex ? config.ex * 1000 : this.defaultTtlMs);
+      config?.px ??
+      (config?.ex ? config.ex * 1000 : this.defaultTtlMs);
     await this.cacheManager.set(key, response, ttl);
 
     for (const table of tables) {

@@ -10,7 +10,11 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { Expose, Transform, TransformFnParams } from 'class-transformer';
+import {
+  Expose,
+  Transform,
+  TransformFnParams,
+} from 'class-transformer';
 import { AsBoolean } from '@/config/utils/as-boolean.transformer';
 
 export class AuthConfig {

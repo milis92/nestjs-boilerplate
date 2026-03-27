@@ -12,7 +12,9 @@ const users = authSchema.table('user', {
   id: uuid('id').primaryKey(),
 });
 
-export const withUserId = (onDelete: UpdateDeleteAction = 'cascade') =>
+export const withUserId = (
+  onDelete: UpdateDeleteAction = 'cascade',
+) =>
   uuid('owner_id')
     .notNull()
     .references(() => users.id, { onDelete });

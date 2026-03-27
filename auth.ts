@@ -23,6 +23,6 @@ export const auth = createBetterAuth({
             'true',
         }
       : false,
-    options: `-c search_path=${AUTH_SCHEMA_NAME}'`,
+    options: `-c search_path=${AUTH_SCHEMA_NAME}`,
   }),
 });

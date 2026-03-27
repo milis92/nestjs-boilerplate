@@ -1,7 +1,4 @@
 {
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
   "permissions": {
     "allow": [
       "Bash(git:*)",
@@ -12,6 +9,7 @@
       "Bash(npx:*)",
       "Bash(wc:*)",
       "Bash(ls:*)",
+      "WebSearch",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs"
     ]
@@ -19,22 +17,22 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT_file_path\" | grep -qE '(\\.env|\\.lock$|pnpm-lock)' && echo 'BLOCK: Protected file — .env and lock files should not be edited by Claude' && exit 2 || exit 0"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-tool-guard.sh"
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT_file_path\" | grep -qE '\\.ts$' && pnpm prettier --write \"$TOOL_INPUT_file_path\" 2>/dev/null || true"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-tool-prettier.sh"
           }
         ]
       }
@@ -42,8 +40,6 @@
   },
   "enabledPlugins": {
     "context7@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true
   }
 }

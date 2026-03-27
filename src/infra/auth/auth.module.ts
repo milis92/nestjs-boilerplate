@@ -1,8 +1,15 @@
-import { Global, Module, OnModuleDestroy } from '@nestjs/common';
+import {
+  Global,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { Cache } from '@nestjs/cache-manager';
 import { Pool } from 'pg';
+import helmet from 'helmet';
 import authConfig, { AuthConfig } from '@/config/auth.config';
 import {
   AUTH_SCHEMA_NAME,
@@ -92,8 +99,28 @@ export function createAuthPool(config: AuthConfig): Pool {
   controllers: [AuthController],
   exports: [AuthService, AuthHealthCheckIndicator],
 })
-export class AuthModule implements OnModuleDestroy {
+export class AuthModule implements NestModule, OnModuleDestroy {
   constructor(private readonly pool: Pool) {}
+
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(
+        helmet({
+          contentSecurityPolicy: {
+            directives: {
+              defaultSrc: [`'self'`],
+              styleSrc: [`'self'`, `'unsafe-inline'`],
+              fontSrc: [`'self'`, 'data:'],
+              imgSrc: [`'self'`, 'data:'],
+              scriptSrc: [`'self'`, `'unsafe-inline'`],
+              connectSrc: [`'self'`],
+            },
+          },
+        }),
+      )
+      .forRoutes('auth/open-api');
+  }
+
   async onModuleDestroy() {
     await this.pool.end();
   }

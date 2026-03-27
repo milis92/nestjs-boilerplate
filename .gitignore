@@ -396,6 +396,10 @@ Temporary Items
 # Local
 .env
 dist
+src/metadata.ts
 .webpack
 .serverless/**/*.zip
-/docs/
+/docs/superpowers
+.worktrees/
+uploads/
+.claude/settings.local.json

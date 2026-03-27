@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import swc from 'unplugin-swc';
 import { defineConfig } from 'vitest/config';
 import type { ViteUserConfig } from 'vitest/config';
-import * as dotenv from '@dotenvx/dotenvx'
+import * as dotenv from '@dotenvx/dotenvx';
 
 export default defineConfig(() => {
   const env = dotenv.config({ path: '.env.test', quiet: true });

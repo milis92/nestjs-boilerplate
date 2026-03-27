@@ -33,9 +33,11 @@ export class HttpCacheInterceptor extends CacheInterceptor {
     }
 
     // Never cache authenticated requests
-    const request = context.switchToHttp().getRequest<
-      Request & { session?: { user?: { id?: string } } }
-    >();
+    const request = context
+      .switchToHttp()
+      .getRequest<
+        Request & { session?: { user?: { id?: string } } }
+      >();
     if (request?.session?.user?.id) {
       return false;
     }

@@ -61,9 +61,7 @@ function createPool(config: DatabaseConfig): Pool {
  */
 @Global()
 @Module({
-  imports: [
-    ConfigModule.forFeature(databaseConfig),
-  ],
+  imports: [ConfigModule.forFeature(databaseConfig)],
   providers: [
     {
       provide: Pool,

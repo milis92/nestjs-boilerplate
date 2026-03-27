@@ -1,23 +1,20 @@
 ---
 paths:
   - "src/domain/**/graphql/**"
-  - "src/infra/graphql/**"
 ---
 
 # GraphQL Layer (Apollo)
 
 Rules for implementing GraphQL resolvers, object types, and input types in domain modules.
 
-**Reference implementation**: `src/domain/accounts/graphql/`
-
 ## Naming
 
-| Type       | File pattern           | Example              | Class name                             |
-|------------|------------------------|----------------------|----------------------------------------|
-| Resolver   | `<module>.resolver.ts` | `widgets.resolver.ts`| `WidgetsResolver`                      |
-| ObjectType | `<module>.object.ts`   | `widget.object.ts`   | `WidgetObject`                         |
-| InputType  | `<module>.input.ts`    | `widget.input.ts`    | `CreateWidgetInput`, `UpdateWidgetInput`|
-| Enum       | (in object file)       |                      | `WidgetTypeEnum`                       |
+| Type       | File pattern           | Example               | Class name                               |
+|------------|------------------------|-----------------------|------------------------------------------|
+| Resolver   | `<module>.resolver.ts` | `widgets.resolver.ts` | `WidgetsResolver`                        |
+| ObjectType | `<module>.object.ts`   | `widget.object.ts`    | `WidgetObject`                           |
+| InputType  | `<module>.input.ts`    | `widget.input.ts`     | `CreateWidgetInput`, `UpdateWidgetInput` |
+| Enum       | (in object file)       |                       | `WidgetTypeEnum`                         |
 
 Note: file names are **singular** for GraphQL types (`widget.object.ts`), **plural** for the resolver (`widgets.resolver.ts`).
 
@@ -62,6 +59,21 @@ registerEnumType(FooTypeEnum, { name: 'FooType', description: 'Type of foo' });
 
 - ID: `@Args('id', { type: () => ID })`.
 - Input: `@Args('input') input: CreateFooInput`.
+
+### Input → service conversion
+
+Unlike REST (which uses `request.toDomain()`), GraphQL resolvers convert inputs inline:
+
+```typescript
+// Create — map all fields, provide defaults via ??
+const foo = await this.foosService.create(user.id, {
+  name: input.name,
+  type: input.type,
+  currency: input.currency ?? 'USD',
+  bar: input.bar ?? null,
+  balance: BigInt(input.balance),
+});
+```
 
 ### Return types
 

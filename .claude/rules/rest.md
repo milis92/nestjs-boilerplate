@@ -24,7 +24,6 @@ src/domain/<feature>/rest/
 Key class-level decorators:
 
 - `@Controller('<plural-name>')` — route path is plural, lowercase (e.g., `widgets`, `category-groups`)
-- `@OpenApiController(tag)` - Applies common OpenAPI decorators
 - `@UseFilters(ServiceErrorFilter)` — maps `ServiceError` codes to HTTP status codes
 
 ### Controller method parameters
@@ -61,26 +60,18 @@ return FooResponse.fromDomain(bar);
 | Create    | `@Post()` + `@HttpCode(201)`        | 201    | `FooResponse`   |
 | Update    | `@Patch(':id')`                     | 200    | `FooResponse`   |
 | Delete    | `@Delete(':id')` + `@HttpCode(204)` | 204    | `void`          |
-| Archive   | `@Post(':id/archive')`              | 200    | `FooResponse`   |
-| Restore   | `@Post(':id/restore')`              | 200    | `FooResponse`   |
+| Archive   | `@Post(':id/archive')`              | 201    | `FooResponse`   |
+| Restore   | `@Post(':id/restore')`              | 201    | `FooResponse`   |
 
 ## Request types
 
-Request DTO's responsible for validation and conversion to the service layer type.
+Request DTOs are responsible for validation and conversion to the service layer type.
 
+- Create and Update request DTOs are always **separate classes** (not using `PartialType`).
 - `@ApiSchema({ name })` for OpenAPI schema naming (not the class name).
 - Every request class has a `toDomain()` method that converts the HTTP-facing DTO into the service-layer type.
 
-### Validation
-
-Global `ValidationPipe` is configured with:
-
-- `whitelist: true` — strips unknown properties
-- `forbidNonWhitelisted: true` — errors on unknown properties
-- `transform: true` — auto-transforms plain objects to DTO instances
-- `errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY` — returns 422, not 400
-
-#### Validation rules
+### Validation rules
 
 | Pattern                    | Decorator stack                                          | DTO type                   | Example                    |
 |----------------------------|----------------------------------------------------------|----------------------------|----------------------------|
@@ -89,34 +80,14 @@ Global `ValidationPipe` is configured with:
 | Nullable (explicitly null) | `@ValidateIf((o) => o.field !== null)` + `@IsOptional()` | `notes?: string \| null`   | Notes, descriptions        |
 | Default value              | `@IsOptional() @IsString()`                              | `currency: string = 'USD'` | Flags, enums with defaults |
 
-### Service-layer conversion
+### Service-layer conversion rules
 
 - **Direct passthrough** — `name: this.name`
 - **Type conversion** — `amount: BigInt(this.amount)`, `date: new Date(this.date)`
-- **Nullish coalescing for defaults** — `categorySource: this.categorySource ?? 'manual'`
+- **Nullish coalescing for defaults** — `type: this.type ?? 'standard'`
 - **Nullable fallback** — `notes: this.notes ?? null`
-- **Field renaming** — `category: this.categoryId` (DTO name differs from domain name)
+- **Field renaming** — `foo: this.fooId` (DTO name differs from domain name)
 - **Nested mapping** — `splits: this.splits.map((s) => s.toDomain())`
-
-**Create vs Update `toDomain()` differences:**
-
-```typescript
-// Create — required fields, direct conversion, defaults via ??
-function toDomain(): CreateFoo {
-    return {
-        amount: BigInt(this.amount),
-        notes: this.notes ?? null,
-    };
-}
-
-// Update — all optional, guard conversions with undefined check
-function toDomain(): UpdateFoo {
-    return {
-        amount: this.amount !== undefined ? BigInt(this.amount) : undefined,
-        notes: this.notes,
-    };
-}
-```
 
 ## Response types
 
@@ -129,8 +100,8 @@ Response DTO's responsible for mapping from the service layer type to the HTTP-f
 ### Field mapping in `fromDomain()`
 
 - **Direct passthrough** — `response.name = entity.name`
-- **Nested single** — `response.category = entity.category ? CategoryResponse.fromDomain(entity.category) : null`
-- **Nested array** — `response.tags = entity.tags ? TagResponse.fromDomainList(entity.tags) : []`
+- **Nested single** — `response.foo = entity.foo ? FooResponse.fromDomain(entity.foo) : null`
+- **Nested array** — `response.bars = entity.bars ? BarResponse.fromDomainList(entity.bars) : []`
 
 ## OpenAPI decorators
 
@@ -139,9 +110,8 @@ Response DTO's responsible for mapping from the service layer type to the HTTP-f
 
 ## Anti-patterns
 
-- **Do not access the database from controllers** — delegate all data access to the service layer.
-- **Do not throw `ServiceError` from controllers** — throw `NotFoundException` for not-found cases; let
-  `ServiceErrorFilter` handle errors originating from services.
-- **Do not manually validate UUID path params** — use `@UUIDv7Param()`.
-- **Do not return 400 for validation errors** — the global `ValidationPipe` returns 422.
-- **Do not construct response objects with `new` and setters** — use the static `fromDomain()` factory.
+- NEVER access the database from controllers — delegate all data access to the service layer.
+- NEVER throw `ServiceError` from controllers — let `ServiceErrorFilter` handle errors originating from services.
+- NEVER manually validate UUID path params — use `@UUIDv7Param()`.
+- NEVER return 400 for validation errors — the global `ValidationPipe` returns 422.
+- NEVER construct response objects with `new` and setters** — use the static `fromDomain()` factory.

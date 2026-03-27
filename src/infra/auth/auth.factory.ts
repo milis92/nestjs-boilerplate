@@ -1,4 +1,4 @@
-import { openAPI } from 'better-auth/plugins';
+import { admin, openAPI } from 'better-auth/plugins';
 import {
   betterAuth,
   BetterAuthOptions,
@@ -7,6 +7,7 @@ import {
   SecondaryStorage,
 } from 'better-auth';
 import { Pool } from 'pg';
+import { apiKey } from '@better-auth/api-key';
 
 /** Return type of {@link createBetterAuth} — the configured BetterAuth instance. */
 export type BetterAuthInstance = ReturnType<typeof createBetterAuth>;
@@ -43,10 +44,12 @@ export function createBetterAuth(params: BetterAuthFactoryParams) {
       },
     },
     plugins: [
+      admin(),
+      apiKey(),
+      ...(params.plugins ?? []),
       openAPI({
         disableDefaultReference: true,
       }),
-      ...(params.plugins ?? []),
     ],
     secret: params.secret,
     baseURL: params.baseUrl,

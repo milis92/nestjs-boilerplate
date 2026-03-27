@@ -1,11 +1,8 @@
-import {
-  timestamp,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { timestamp, uuid } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 /** Shared timestamp columns: `created_at` (auto-set on insert) and `updated_at` (auto-set on update). */
-const timestamps = {
+export const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -15,6 +12,6 @@ const timestamps = {
 };
 
 /** UUIDv7 primary key column, auto-generated via the `uuidv7()` PostgreSQL function. */
-const primaryId = uuid('id')
+export const primaryId = uuid('id')
   .primaryKey()
   .default(sql`uuidv7()`);

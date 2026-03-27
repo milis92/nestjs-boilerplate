@@ -220,6 +220,14 @@ All configuration is via environment variables. See `.env.example` for a fully c
 | `GQL_PLAYGROUND`            | Enable GraphQL Playground                                    | `true`                            |
 | `GQL_PATH`                  | GraphQL endpoint path                                        | `/graphql`                        |
 | `GQL_INTROSPECTION`         | Enable introspection                                         | `true`                            |
+| **Upload**                  |                                                              |                                   |
+| `UPLOAD_DEST`               | Destination directory for uploaded files                     | `./uploads`                       |
+| `UPLOAD_DISK_THRESHOLD`     | Disk usage threshold (0–1) before rejecting uploads          | `0.9`                             |
+| **LLM**                     |                                                              |                                   |
+| `LLM_PROVIDER`              | LLM provider (`openai`, `anthropic`, `google`, etc.)         | _(required)_                      |
+| `LLM_MODEL`                 | Model identifier for the chosen provider                     | _(required)_                      |
+| `LLM_API_KEY`               | API key for the LLM provider                                 | _(required)_                      |
+| `LLM_BASE_URL`              | Custom endpoint URL (for proxies or self-hosted models)      | _(provider default)_              |
 
 > [!TIP]
 > Auth database variables (`AUTH_DATABASE_*`) default to the main PostgreSQL connection.
@@ -308,8 +316,8 @@ The Vitest config defines two projects:
 | `unit`  | `src/**/*.spec.ts`      | Service logic           |
 | `e2e`   | `test/**/*.e2e-spec.ts` | Full HTTP/GraphQL stack |
 
-A **global setup** (`vitest-global.setup.ts`) provisions a shared PostgreSQL testcontainer with all migrations applied,
-so individual tests don't need to manage database lifecycle.
+A **global setup** (`vitest-global.setup.ts`) provisions shared PostgreSQL and Redis testcontainers with all migrations
+applied, so individual tests don't need to manage database or queue lifecycle.
 
 ### Unit Tests
 
@@ -373,6 +381,8 @@ pnpm test:e2e:watch           # Watch mode
 | `TestAuthModule`        | `AuthModule`        | Uses BetterAuth's `testUtils` plugin for user/session creation |
 | `TestCacheModule`       | `CacheModule`       | In-memory cache only (no Redis)                                |
 | `TestRateLimiterModule` | `RateLimiterModule` | Rate limiting disabled                                         |
+| `TestQueueModule`       | `QueueModule`       | Real BullMQ backed by a Redis testcontainer                    |
+| `TestLlmModule`         | `LlmModule`         | Stub LLM model (no external API calls)                         |
 
 ### Test Stubs
 
@@ -385,6 +395,9 @@ src/infra/auth/stubs/test-user.factory.ts
 src/infra/drizzle/stubs/test-drizzle.module.ts
 src/infra/cache/stubs/test-cache.module.ts
 src/infra/rate_limiter/stubs/test-rate-limiter.module.ts
+src/infra/queue/stubs/test-queue.module.ts
+src/infra/llm/stubs/test-llm.module.ts
+src/infra/llm/stubs/test-llm.service.ts
 ```
 
 ---
@@ -420,7 +433,7 @@ Docker Compose is **not** needed for tests — Testcontainers provisions its own
 
 ### `pnpm db:generate` fails
 
-This runs `db-generate.sh` (a bash script). On Windows, use WSL or Git Bash.
+This runs `drizzle-kit generate` via `dotenvx`. Ensure your `.env` file exists and your database is running.
 
 ### Database migration errors about missing `auth` schema
 
