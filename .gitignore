@@ -401,5 +401,6 @@ src/metadata.ts
 .serverless/**/*.zip
 /docs/superpowers
 .worktrees/
+.claude/worktrees/
 uploads/
 .claude/settings.local.json

@@ -5,7 +5,7 @@ paths:
 
 # Database Layer (Drizzle ORM)
 
-All Drizzle ORM schema definitions, relations, and typed exports are in `src/infra/drizzle/`.
+> Constraints for database schema, relations, and types. The matching `/scaffold-database` skill provides code templates.
 
 ## Directory structure
 
@@ -16,11 +16,7 @@ src/infra/drizzle/
 └── types.ts        # Row types ($inferSelect with optional relations, $inferInsert)
 ```
 
-## Schema (`schema.ts`)
-
-All tables and enums for every domain feature are defined in this single file. 
-
-### Naming conventions
+## Naming conventions
 
 | Element           | Convention                 | Example                      |
 |-------------------|----------------------------|------------------------------|
@@ -30,75 +26,29 @@ All tables and enums for every domain feature are defined in this single file.
 | Index name        | `<table>_<column>_idx`     | `widgets_owner_id_idx`       |
 | Unique constraint | `<table>_<columns>_unique` | `widgets_owner_name_unique`  |
 
-### Shared schema utilities
+## Shared schema utilities
 
-Defined in `schema.ts`:
+- `primaryId`, `timestamps` -- defined in `@src/infra/drizzle/schema.ts`
+- `withUserId()` -- tenant FK to auth `user` table, from `@src/infra/auth/auth.schema`
+- !IMPORTANT: Every domain table MUST use `primaryId` for the id column and `...timestamps` for created/updated tracking.
+- !IMPORTANT: Every domain table MUST use `withUserId('cascade')` for the `ownerId` column.
 
-- `primaryId` — UUID v7 primary key via `sql\`uuidv7()\``
-- `timestamps` — `createdAt` (defaultNow, notNull) and `updatedAt` ($onUpdate)
+## Relations
 
-From `@/infra/auth/auth.schema`:
+- Name relation properties **singular** for one-relations and **plural** for many-relations (`foo`, `bars`).
 
-- `withUserId()` — tenant FK to auth `user` table with configurable `onDelete`
+## Types
 
-```typescript
-import { withUserId } from '@/infra/auth/auth.schema';
-
-export const widgets = pgTable('widgets', {
-    id: primaryId,
-    ownerId: withUserId('cascade'),
-    // ...
-    ...timestamps,
-});
-```
-
-## Relations (`relations.ts`)
-
-A single `defineRelations()` call covers all tables. Import the full schema and define all relations together:
-
-```typescript
-import { defineRelations } from 'drizzle-orm';
-import * as schema from './schema';
-
-export const relations = defineRelations(schema, (r) => ({
-    widgets: {
-        // One-to-many: widget belongs to one foo
-        foo: r.one.foos({
-            from: r.widgets.fooId,
-            to: r.foos.id,
-        }),
-        // Many-to-many through join table
-        bars: r.many.bars({
-            from: r.widgets.id.through(r.widgetBars.widgetId),
-            to: r.bars.id.through(r.widgetBars.barId),
-        }),
-    },
-}));
-```
-
-### Naming conventions
-
-Name relation properties in **singular** for one-relations and **plural** for many-relations (`foo`, `bars`).
-
-## Types (`types.ts`)
-
-Row types extend `$inferSelect` with optional relation properties (optional because they're only present when eagerly loaded). Insert types use `$inferInsert` for new rows.
-
-```typescript
-import * as schema from './schema';
-
-export type WidgetRow = typeof schema.widgets.$inferSelect & {
-    foo?: FooRow;
-    bars?: BarRow[];
-};
-export type NewWidgetRow = typeof schema.widgets.$inferInsert;
-```
+- Row types: `$inferSelect` with optional relation properties (only present when eagerly loaded).
+- Insert types: `$inferInsert` for new rows.
+- !IMPORTANT: Export both `FooRow` and `NewFooRow` from `types.ts` for every domain table.
 
 ## Soft deletes
 
-Only use `archivedAt: timestamp('archived_at', { withTimezone: true })` when the domain requires it.
+- Only use `archivedAt` column when the domain requires it. Prefer status enums (e.g., `active`/`archived`) for simple archiving.
 
 ## Anti-patterns
 
-- NEVER edit generated migration files.
-- Avoid writing raw SQL when writing Drizzle ORM queries.
+- !IMPORTANT: NEVER edit generated migration files.
+- NEVER write raw SQL when Drizzle ORM queries can do the job.
+- NEVER add tables to a separate schema file -- all domain tables go in `schema.ts`.

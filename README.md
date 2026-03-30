@@ -101,6 +101,9 @@ It focuses on:
 | 🔒 **Security**           | Helmet, CORS, validation pipes                       |
 | ⚡ **Graceful Shutdown**   | Zero-downtime friendly shutdown hooks                |
 | ⚙️ **Dynamic Config**     | Feature-oriented configuration with validation       |
+| 📤 **File Uploads**        | Multer with disk usage health checks                 |
+| 📋 **Job Queues**          | BullMQ (Redis-backed) with Bull Board UI             |
+| 🤖 **LLM Integration**    | AI SDK with OpenAI, Anthropic, Google providers      |
 | ⚡ **Fast Builds**         | SWC + Express (Fastify migration is straightforward) |
 
 ---
@@ -112,6 +115,9 @@ It focuses on:
 ```bash
 # Start PostgreSQL and Redis (using Docker)
 pnpm docker:up
+
+# Stop containers
+pnpm docker:down
 
 # Generate database migrations
 pnpm db:generate
@@ -193,11 +199,17 @@ All configuration is via environment variables. See `.env.example` for a fully c
 | `POSTGRES_USER`             | Database user                                                | `postgres`                        |
 | `POSTGRES_PASSWORD`         | Database password                                            | `postgres`                        |
 | `POSTGRES_SSL`              | Enable TLS                                                   | `false`                           |
+| `POSTGRES_SSL_REJECT_UNAUTHORIZED` | Reject unauthorized TLS certificates                  | `true`                            |
 | **Redis**                   |                                                              |                                   |
 | `REDIS_HOST`                | Redis host                                                   | `localhost`                       |
 | `REDIS_PORT`                | Redis port                                                   | `6379`                            |
 | `REDIS_PASSWORD`            | Redis password (empty = no auth)                             | _(empty)_                         |
 | `REDIS_TLS`                 | Enable TLS                                                   | `false`                           |
+| `REDIS_REJECT_UNAUTHORIZED` | Reject unauthorized TLS certificates                         | `false`                           |
+| `REDIS_CA`                  | Path to CA certificate for TLS                               | _(empty)_                         |
+| `REDIS_KEY`                 | Path to client private key for TLS                           | _(empty)_                         |
+| `REDIS_CERT`                | Path to client certificate for TLS                           | _(empty)_                         |
+| `REDIS_CONNECT_TIMEOUT`     | Connection timeout in milliseconds                           | `10000`                           |
 | `REDIS_CACHE_DB`            | Redis DB number for cache                                    | `0`                               |
 | `REDIS_RATE_LIMITER_DB`     | Redis DB number for rate limiter                             | `1`                               |
 | **Authentication**          |                                                              |                                   |
@@ -216,22 +228,30 @@ All configuration is via environment variables. See `.env.example` for a fully c
 | **OpenAPI**                 |                                                              |                                   |
 | `DOCS_PATH`                 | Swagger UI path                                              | `${APP_GLOBAL_ROUTE_PREFIX}/docs` |
 | `DOCS_TITLE`                | API docs title                                               | `API`                             |
+| `DOCS_DESCRIPTION`          | API docs description                                         | `API documentation`               |
+| `DOCS_VERSION`              | API version string in docs                                   | `1.0`                             |
 | **GraphQL**                 |                                                              |                                   |
 | `GQL_PLAYGROUND`            | Enable GraphQL Playground                                    | `true`                            |
+| `GQL_DEBUG`                 | Enable GraphQL debug mode                                    | `true`                            |
 | `GQL_PATH`                  | GraphQL endpoint path                                        | `/graphql`                        |
 | `GQL_INTROSPECTION`         | Enable introspection                                         | `true`                            |
 | **Upload**                  |                                                              |                                   |
 | `UPLOAD_DEST`               | Destination directory for uploaded files                     | `./uploads`                       |
 | `UPLOAD_DISK_THRESHOLD`     | Disk usage threshold (0–1) before rejecting uploads          | `0.9`                             |
 | **LLM**                     |                                                              |                                   |
-| `LLM_PROVIDER`              | LLM provider (`openai`, `anthropic`, `google`, etc.)         | _(required)_                      |
-| `LLM_MODEL`                 | Model identifier for the chosen provider                     | _(required)_                      |
-| `LLM_API_KEY`               | API key for the LLM provider                                 | _(required)_                      |
+| `LLM_PROVIDER`              | LLM provider (`openai`, `anthropic`, `google`, `openai-compatible`) | `openai`                    |
+| `LLM_MODEL`                 | Model identifier for the chosen provider                     | `gpt-4o-mini`                     |
+| `LLM_API_KEY`               | API key for the LLM provider                                 | _(empty)_                         |
 | `LLM_BASE_URL`              | Custom endpoint URL (for proxies or self-hosted models)      | _(provider default)_              |
 
-> [!TIP]
-> Auth database variables (`AUTH_DATABASE_*`) default to the main PostgreSQL connection.
-> Override them only if auth data lives in a separate database.
+| **Auth Database** (override only if auth lives in a separate DB) | | |
+| `AUTH_DATABASE_HOST`        | Auth database host                                           | `${POSTGRES_HOST}`                |
+| `AUTH_DATABASE_PORT`        | Auth database port                                           | `${POSTGRES_PORT}`                |
+| `AUTH_DATABASE_DB`          | Auth database name                                           | `${POSTGRES_DB}`                  |
+| `AUTH_DATABASE_USER`        | Auth database user                                           | `${POSTGRES_USER}`                |
+| `AUTH_DATABASE_PASSWORD`    | Auth database password                                       | `${POSTGRES_PASSWORD}`            |
+| `AUTH_DATABASE_SSL`         | Enable TLS for auth database                                 | `${POSTGRES_SSL}`                 |
+| `AUTH_DATABASE_SSL_REJECT_UNAUTHORIZED` | Reject unauthorized TLS certificates for auth DB | `${POSTGRES_SSL_REJECT_UNAUTHORIZED}` |
 
 ---
 
@@ -241,31 +261,47 @@ All configuration is via environment variables. See `.env.example` for a fully c
 src/
 ├── config/                             # Validated config objects per concern
 ├── domain/                             # Feature modules (your business logic)
-│   ├── <feature>/                      # One directory per feature
-│   │   ├── <feature>.module.ts
-│   │   ├── <feature>.service.ts
-│   │   ├── <feature>.service.spec.ts
-│   │   ├── graphql/                    # Resolvers, inputs, object types
-│   │   ├── rest/                       # Controllers, request/response DTOs
-│   │   └── stubs/                      # Test factories
-│   └── shared/                         
+│   ├── features.module.ts              # Registers all feature modules
+│   └── shared/                         # Shared domain utilities
+│       ├── decorators/                 # Custom decorators
+│       ├── errors/                     # Domain error types
+│       └── helpers/                    # Shared helpers
 ├── infra/                              # Infrastructure modules
+│   ├── infra.module.ts                 # Registers all infra modules
 │   ├── auth/                           # BetterAuth
-│   ├── cache/                          # Caching
-│   ├── drizzle/                        # Drizzle ORM 
+│   ├── cache/                          # Two-level caching (LRU + Redis)
+│   ├── drizzle/                        # Drizzle ORM
 │   ├── graphql/                        # GraphQL with Apollo Server
-│   ├── rate_limiter/                   # Rate limiting
+│   ├── llm/                            # LLM integration (AI SDK)
+│   ├── queue/                          # BullMQ job queues + Bull Board
+│   ├── rate_limiter/                   # Redis-backed rate limiting
+│   └── upload/                         # File uploads (Multer)
 ├── tools/                              # Utilities
 │   ├── health/                         # Health checks (Terminus)
 │   ├── logger/                         # Pino structured logging
 │   └── openapi/                        # OpenAPI docs (Scalar UI, dev-only)
 ├── testing/                            # Shared test utilities
+│   ├── test-module.builder.ts          # Unit test module factory
+│   ├── test-constants.ts               # Shared test constants
+│   └── error.response.ts              # Error response helpers
 
 test/
-├── rest/                # REST E2E tests
-├── graphql/             # GraphQL E2E tests
-├── test-application.context.ts  # Full app context for E2E
-└── test-app.module.ts   # Test version of AppModule
+├── rest/                               # REST E2E tests
+├── graphql/                            # GraphQL E2E tests
+├── test-application.context.ts         # Full app context for E2E
+└── test-app.module.ts                  # Test version of AppModule
+```
+
+New domain features follow this layout (none scaffolded yet — use the structure as a template):
+
+```txt
+src/domain/<feature>/
+├── <feature>.module.ts
+├── <feature>.service.ts
+├── <feature>.service.spec.ts
+├── graphql/                            # Resolvers, inputs, object types
+├── rest/                               # Controllers, request/response DTOs
+└── stubs/                              # Test factories
 ```
 
 The application follows a **clean separation between infrastructure and business logic**. Infrastructure modules (
@@ -297,6 +333,9 @@ these infrastructure capabilities without needing to know their implementation d
 | Customize GraphQL          | `src/config/graphql.config.ts`, `src/infra/graphql/`                             |
 | Add health checks          | `src/tools/health/health.module.ts`                                              |
 | Configure app middleware   | `src/configure.ts`                                                               |
+| Configure file uploads     | `src/config/upload.config.ts`, `src/infra/upload/`                               |
+| Configure job queues       | `src/config/redis.config.ts`, `src/infra/queue/`                                 |
+| Configure LLM providers    | `src/config/llm.config.ts`, `src/infra/llm/`                                    |
 | Add new infra module       | Create in `src/infra/`, add config in `src/config/`, import in `infra.module.ts` |
 | Add a new domain feature   | Create in `src/domain/<feature>/`, register in `features.module.ts`              |
 
@@ -306,6 +345,10 @@ these infrastructure capabilities without needing to know their implementation d
 
 Tests use **Vitest** with **real PostgreSQL** via Testcontainers — no database mocks. Docker Compose is not needed for
 tests.
+
+> [!NOTE]
+> The test infrastructure is fully wired, but no domain feature tests have been written yet.
+> The patterns below describe the intended testing approach for new features.
 
 ### Test Runner
 
@@ -324,15 +367,63 @@ applied, so individual tests don't need to manage database or queue lifecycle.
 Unit tests live next to the code they test (e.g., `<feature>.service.spec.ts` alongside `<feature>.service.ts`). They test
 **service logic only** — no controller or resolver specs.
 
-Each test uses `TestModuleBuilder` to create an isolated NestJS testing module:
+Each test uses `TestModuleBuilder` to create an isolated NestJS testing module with real infrastructure stubs
+(testcontainer PostgreSQL, BetterAuth test utils, in-memory cache, stub LLM). Your feature module is imported as-is —
+only infrastructure modules are swapped.
+
+#### `TestModuleBuilder`
 
 ```typescript
+// Basic usage — creates a compiled NestJS testing module
 const ctx = await TestModuleBuilder.create(YourFeatureModule);
 const service = ctx.get(YourFeatureService);
+
+// With provider overrides (e.g., mock an external dependency)
+const ctx = await TestModuleBuilder.create(YourFeatureModule, [
+  { token: ExternalApiService, useValue: mockApiService },
+]);
 ```
 
-`TestModuleBuilder` automatically substitutes infrastructure with test stubs (in-memory cache, testcontainer PostgreSQL,
-BetterAuth test utils) while keeping your module under test intact.
+`TestModuleBuilder.create()` automatically registers these test stubs alongside your module:
+
+| Stub                  | What it provides                                    |
+|-----------------------|-----------------------------------------------------|
+| `TestDrizzleModule`   | Drizzle connected to the shared testcontainer PG    |
+| `TestAuthModule`      | BetterAuth with `testUsers` plugin                  |
+| `TestCacheModule`     | In-memory cache (no Redis)                          |
+| `TestQueueModule`     | Real BullMQ backed by a Redis testcontainer         |
+| `TestLlmModule`       | Stub LLM model (no external API calls)              |
+
+#### `TestModuleContext`
+
+The context object returned by `TestModuleBuilder.create()`:
+
+| Member        | Type               | Description                                         |
+|---------------|--------------------|-----------------------------------------------------|
+| `get(token)`  | `<T>(token) => T`  | Resolve any provider from the compiled module       |
+| `database`    | `DrizzleDatabase`  | Direct Drizzle access for seeding and cleanup       |
+| `auth`        | `TestAuthContext`   | Create/drop test users and generate auth headers    |
+| `teardown()`  | `Promise<void>`    | Close the module (call in `afterAll`)               |
+
+#### `TestAuthContext`
+
+Available via `ctx.auth` in both unit and E2E tests:
+
+| Method                       | Returns                    | Description                                      |
+|------------------------------|----------------------------|--------------------------------------------------|
+| `defaultUserId()`            | `Promise<UserId>`          | Lazily creates and caches a default test user    |
+| `createUser()`               | `Promise<UserId>`          | Creates a fresh user with a random email         |
+| `dropUser(userId)`           | `Promise<void>`            | Deletes a user (clean up in tests)               |
+| `getAuthHeaders(userId)`     | `Promise<Record<string, string>>` | Returns auth headers for authenticated requests |
+
+#### Test constants
+
+`@/testing/test-constants` provides helpers for "not found" scenarios:
+
+| Export              | Usage                                                     |
+|---------------------|-----------------------------------------------------------|
+| `NON_EXISTENT_UUID` | Valid UUID v7 that never matches a real entity (for E2E)  |
+| `nonExistentId()`   | Returns the nil UUID (for unit tests)                     |
 
 ```bash
 pnpm test                     # Run all unit tests
@@ -346,26 +437,47 @@ pnpm test:cov                 # With coverage report
 E2E tests live in `test/rest/` and `test/graphql/` and exercise the full application stack — HTTP requests through
 controllers/resolvers, auth guards, validation pipes, and real database queries.
 
-Each test uses `TestApplicationContext` to boot a complete NestJS application:
+Each test uses `TestApplicationContext` to boot a complete NestJS application with real middleware, guards, and validation
+pipes — the same stack as production.
+
+#### `TestApplicationContext`
 
 ```typescript
 const ctx = await TestApplicationContext.create();
-const client = ctx.client(headers);  // supertest agent
 
-// REST
-await client.get('/api/your-resource');
+// REST — client() returns a supertest agent with auth headers pre-set
+const client = await ctx.client();
+await client.get('/api/v1/your-resource').expect(200);
+
+// REST — unauthenticated request (pass null)
+const anonClient = await ctx.client(null);
+await anonClient.get('/api/v1/your-resource').expect(401);
+
+// REST — custom user
+const userId = await ctx.auth.createUser();
+const headers = await ctx.auth.getAuthHeaders(userId);
+const userClient = await ctx.client(headers);
 
 // GraphQL
-await ctx.executeGraphql(query, headers);
+const result = await ctx.executeGraphql({ query: `{ yourQuery { id } }` });
+
+// Direct DB seeding
+await ctx.database.insert(yourTable).values({ ... });
 ```
 
-`TestApplicationContext` provides:
+| Member                                 | Type                       | Description                                              |
+|----------------------------------------|----------------------------|----------------------------------------------------------|
+| `app`                                  | `INestApplication`         | Full NestJS app instance                                 |
+| `database`                             | `DrizzleDatabase`          | Direct Drizzle access for seeding and assertions         |
+| `auth`                                 | `TestAuthContext`           | Same auth utilities as unit tests (see above)            |
+| `client(headers?)`                     | `Promise<SuperTestAgent>`  | Supertest agent; defaults to authenticated default user  |
+| `client(null)`                         | `Promise<SuperTestAgent>`  | Supertest agent with no auth (unauthenticated requests)  |
+| `executeGraphql(operation, headers?)`  | `Promise<GraphQLResponse>` | Sends a GraphQL POST to `/graphql`                       |
+| `teardown()`                           | `Promise<void>`            | Close the app (call in `afterAll`)                       |
 
-- `app` — The NestJS application instance
-- `database` — Direct Drizzle database access for seeding
-- `auth` — `TestAuthContext` for creating test users and sessions
-- `client(headers?)` — Supertest agent for HTTP requests
-- `executeGraphql(operation, headers?)` — GraphQL query execution
+`TestApplicationContext` builds on `TestModuleBuilder` internally, so it gets the same infrastructure stubs. The
+difference is that it also calls `configure(app)` to apply all middleware, pipes, and guards — making it a true
+integration test against the full HTTP/GraphQL stack.
 
 ```bash
 pnpm test:e2e                 # Run all E2E tests
@@ -373,23 +485,11 @@ pnpm test:e2e <feature>       # Run a specific E2E test
 pnpm test:e2e:watch           # Watch mode
 ```
 
-### Test Infrastructure
-
-| Stub Module             | Replaces            | Behavior                                                       |
-|-------------------------|---------------------|----------------------------------------------------------------|
-| `TestDrizzleModule`     | `DrizzleModule`     | Connects to the shared testcontainer PostgreSQL instance       |
-| `TestAuthModule`        | `AuthModule`        | Uses BetterAuth's `testUtils` plugin for user/session creation |
-| `TestCacheModule`       | `CacheModule`       | In-memory cache only (no Redis)                                |
-| `TestRateLimiterModule` | `RateLimiterModule` | Rate limiting disabled                                         |
-| `TestQueueModule`       | `QueueModule`       | Real BullMQ backed by a Redis testcontainer                    |
-| `TestLlmModule`         | `LlmModule`         | Stub LLM model (no external API calls)                         |
-
 ### Test Stubs
 
-Test factories and stubs live in `stubs/` subdirectories within each module:
+Infrastructure stubs and test factories live in `stubs/` subdirectories within each module:
 
 ```txt
-src/domain/<feature>/stubs/test-<feature>.factory.ts
 src/infra/auth/stubs/test-auth.module.ts
 src/infra/auth/stubs/test-user.factory.ts
 src/infra/drizzle/stubs/test-drizzle.module.ts
@@ -399,6 +499,8 @@ src/infra/queue/stubs/test-queue.module.ts
 src/infra/llm/stubs/test-llm.module.ts
 src/infra/llm/stubs/test-llm.service.ts
 ```
+
+Domain features add their own stubs at `src/domain/<feature>/stubs/test-<feature>.factory.ts`.
 
 ---
 

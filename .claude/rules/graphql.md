@@ -5,102 +5,39 @@ paths:
 
 # GraphQL Layer (Apollo)
 
-Rules for implementing GraphQL resolvers, object types, and input types in domain modules.
+> Constraints for GraphQL resolvers, object types, and input types. The matching `/scaffold-graphql` skill provides code templates.
 
 ## Naming
 
-| Type       | File pattern           | Example               | Class name                               |
-|------------|------------------------|-----------------------|------------------------------------------|
-| Resolver   | `<module>.resolver.ts` | `widgets.resolver.ts` | `WidgetsResolver`                        |
-| ObjectType | `<module>.object.ts`   | `widget.object.ts`    | `WidgetObject`                           |
-| InputType  | `<module>.input.ts`    | `widget.input.ts`     | `CreateWidgetInput`, `UpdateWidgetInput` |
-| Enum       | (in object file)       |                       | `WidgetTypeEnum`                         |
+| Type       | File pattern           | Class name                               |
+|------------|------------------------|------------------------------------------|
+| Resolver   | `<module>.resolver.ts` | `<Module>sResolver` (plural)             |
+| ObjectType | `<module>.object.ts`   | `<Module>Object` (singular)              |
+| InputType  | `<module>.input.ts`    | `Create<Module>Input`, `Update<Module>Input` |
+| Enum       | (in object file)       | `<Module>TypeEnum`                       |
 
-Note: file names are **singular** for GraphQL types (`widget.object.ts`), **plural** for the resolver (`widgets.resolver.ts`).
+- !IMPORTANT: File names are **singular** for types (`widget.object.ts`), **plural** for the resolver (`widgets.resolver.ts`).
+- !IMPORTANT: Unlike REST, GraphQL `UpdateFooInput` extends `PartialType(CreateFooInput)` to make all fields optional.
+- Import domain model from `@/domain/<feature>/<feature>.model` (not the service file) for `fromDomain()`.
+- Import `PartialType` from `@nestjs/graphql` (not `@nestjs/swagger`).
 
-## Object types (`<module>.object.ts`)
+## Enum registration
 
-### Enum registration
+- Define a TypeScript enum with SCREAMING_CASE keys mapping to lowercase database values (e.g., `ACTIVE = 'active'`).
+- Register via `registerEnumType(FooTypeEnum, { name: 'FooType' })`.
+- !IMPORTANT: Place the enum definition and registration in the object type file (`<feature>.object.ts`), not in a separate file.
 
-Define a TypeScript enum mirroring the database enum values exactly, then register it. Do not reuse enums from the tables file.
+## Resolver conventions
 
-```typescript
-export enum FooTypeEnum {
-  alpha = 'alpha',
-  beta = 'beta',
-}
-
-registerEnumType(FooTypeEnum, { name: 'FooType', description: 'Type of foo' });
-```
-
-### ObjectType conventions
-
-- `() => ID` for identifier fields.
-- `() => Date` with `nullable: true` for optional dates.
-- `() => String` with `nullable: true` for optional strings.
-- Cast domain enums to the GraphQL enum type in `fromDomain()`.
-- BigInt to String conversion happens in `fromDomain()`.
-- Provide both `static fromDomain()` and `static fromDomainList()`.
-
-## Input types (`<module>.input.ts`)
-
-- `UpdateFooInput` extends `PartialType(CreateFooInput)` to make all fields optional.
-- Use `class-validator` decorators for validation.
-- BigInt fields are received as strings; conversion happens in the resolver.
-
-## Resolver (`<module>.resolver.ts`)
-
-### Naming
-
-- Queries: plural for list (`foos`), singular for single (`foo`).
-- Mutations: `createFoo`, `updateFoo`, `deleteFoo`, `archiveFoo`, `restoreFoo`.
-
-### Arguments
-
-- ID: `@Args('id', { type: () => ID })`.
-- Input: `@Args('input') input: CreateFooInput`.
-
-### Input → service conversion
-
-Unlike REST (which uses `request.toDomain()`), GraphQL resolvers convert inputs inline:
-
-```typescript
-// Create — map all fields, provide defaults via ??
-const foo = await this.foosService.create(user.id, {
-  name: input.name,
-  type: input.type,
-  currency: input.currency ?? 'USD',
-  bar: input.bar ?? null,
-  balance: BigInt(input.balance),
-});
-```
-
-### Return types
-
-- Delete mutations return `Boolean` (always `true` on success; throws on failure).
-- All other mutations and queries return the ObjectType.
-
-### Update mutations
-
-Use conditional spread to exclude undefined fields:
-
-```typescript
-const foo = await this.foosService.update(user.id, id, {
-  ...(input.name !== undefined && { name: input.name }),
-  ...(input.balance !== undefined && { balance: BigInt(input.balance) }),
-});
-```
-
-### Error handling
-
-- Apply `@UseFilters(ServiceErrorFilter)` on the resolver class.
-- `ServiceErrorFilter` re-throws errors to let NestJS GraphQL handle them.
+- `@Resolver(() => FooObject)` — always specify the ObjectType in the decorator argument.
+- `@UseFilters(ServiceErrorFilter)` on the resolver class — from `@/domain/shared/errors/error.filter`.
 - Throw `NotFoundException` in the resolver for not-found single queries.
-- Service-level `ServiceError` instances propagate through the filter automatically.
+- `ServiceError` instances propagate through the filter automatically.
+- Import service from `../<feature>.service` (relative) and types from `../<feature>.model` (relative).
 
 ## Anti-patterns
 
-- Do not reuse REST/tables enum types in GraphQL. Register separate TypeScript enums with `registerEnumType()`.
-- Do not convert BigInt in InputTypes. Convert in the resolver (`BigInt(input.field)`).
-- Do not use plain spread for update mutations. Use conditional spread (`...(input.field !== undefined && { field: input.field })`) to exclude undefined fields.
-- Do not skip `@UseFilters(ServiceErrorFilter)` on resolvers.
+- NEVER reuse REST/tables enum types in GraphQL -- register separate TypeScript enums with `registerEnumType()`.
+- NEVER convert BigInt in InputTypes -- convert in the resolver (`BigInt(input.field)`).
+- NEVER use plain spread for update mutations -- use conditional spread (`...(input.field !== undefined && { field: input.field })`) to exclude undefined fields.
+- NEVER skip `@UseFilters(ServiceErrorFilter)` on resolvers.
