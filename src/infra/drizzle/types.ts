@@ -5,4 +5,10 @@
  * only populated when the query uses `with:` to eagerly load relations.
  * `New*Row` types use `$inferInsert` for insert operations.
  */
-import * as schema from './schema';
+
+import { todos } from './schema';
+
+/** A todo row as returned by SELECT queries. */
+export type TodoRow = typeof todos.$inferSelect;
+/** A todo row shape for INSERT operations. */
+export type NewTodoRow = typeof todos.$inferInsert;
