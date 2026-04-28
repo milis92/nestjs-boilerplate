@@ -6,10 +6,11 @@ import {
   OnModuleDestroy,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, DiscoveryModule } from '@nestjs/core';
 import { Cache } from '@nestjs/cache-manager';
 import { Pool } from 'pg';
 import helmet from 'helmet';
+
 import authConfig, { AuthConfig } from '@/config/auth.config';
 import {
   AUTH_SCHEMA_NAME,
@@ -20,6 +21,7 @@ import { AuthService } from '@/infra/auth/auth.service';
 import { AuthGuard } from '@/infra/auth/auth.guard';
 import { AuthController } from '@/infra/auth/auth.controller';
 import { AuthHealthCheckIndicator } from '@/infra/auth/auth.health';
+import { UserCreatedHookRegistry } from '@/infra/auth/hooks/user-created.hook';
 
 /** Creates a PostgreSQL connection pool scoped to the `auth` schema for BetterAuth tables. */
 export function createAuthPool(config: AuthConfig): Pool {
@@ -58,17 +60,23 @@ export function createAuthPool(config: AuthConfig): Pool {
  */
 @Global()
 @Module({
-  imports: [ConfigModule.forFeature(authConfig)],
+  imports: [ConfigModule.forFeature(authConfig), DiscoveryModule],
   providers: [
     {
       provide: Pool,
       inject: [authConfig.KEY],
       useFactory: (config: AuthConfig) => createAuthPool(config),
     },
+    UserCreatedHookRegistry,
     {
       provide: BETTER_AUTH,
-      inject: [Pool, authConfig.KEY, Cache],
-      useFactory: (pool: Pool, config: AuthConfig, cache: Cache) =>
+      inject: [Pool, authConfig.KEY, Cache, UserCreatedHookRegistry],
+      useFactory: (
+        pool: Pool,
+        config: AuthConfig,
+        cache: Cache,
+        registry: UserCreatedHookRegistry,
+      ) =>
         createBetterAuth({
           database: pool,
           secret: config.secret,
@@ -86,6 +94,7 @@ export function createAuthPool(config: AuthConfig): Pool {
               await cache.del(key);
             },
           },
+          onUserCreated: (userId) => registry.run(userId),
         }),
     },
     AuthService,

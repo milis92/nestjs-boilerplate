@@ -5,7 +5,6 @@
   "description": "Production-ready NestJS backend boilerplate with auth, caching, rate limiting, GraphQL, and more",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -19,10 +18,9 @@
     "test:e2e:watch": "vitest --project e2e",
     "test:all": "vitest run",
     "db:generate": "dotenvx run -- drizzle-kit generate",
-    "db:migrate": "dotenvx run -- sh -c 'npx @better-auth/cli migrate --yes && drizzle-kit migrate'",
+    "db:migrate": "dotenvx run -- sh -c 'pnpm dlx @better-auth/cli migrate --yes && drizzle-kit migrate'",
     "docker:up": "docker compose --env-file .env -f docker-compose.yml up -d --wait",
-    "docker:down": "docker compose --env-file .env -f docker-compose.yml down",
-    "eval": "vitest run --project eval"
+    "docker:down": "docker compose --env-file .env -f docker-compose.yml down"
   },
   "engines": {
     "npm": ">=10.0.0",

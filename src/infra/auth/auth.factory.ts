@@ -9,9 +9,10 @@ import {
 import { Pool } from 'pg';
 import { apiKey } from '@better-auth/api-key';
 
+export const BETTER_AUTH = Symbol('BETTER_AUTH');
+
 /** Return type of {@link createBetterAuth} — the configured BetterAuth instance. */
 export type BetterAuthInstance = ReturnType<typeof createBetterAuth>;
-export const BETTER_AUTH = Symbol('BETTER_AUTH');
 
 export const AUTH_SCHEMA_NAME = 'auth';
 
@@ -25,9 +26,9 @@ export interface BetterAuthFactoryParams {
   sessionUpdateAge?: number;
   secondaryStorage?: SecondaryStorage;
   plugins?: BetterAuthPlugin[];
+  onUserCreated?: (userId: string) => Promise<void>;
 }
 
-/** Creates and configures a BetterAuth instance with email/password auth and OpenAPI plugin. */
 export function createBetterAuth(params: BetterAuthFactoryParams) {
   return betterAuth({
     appName: 'api',
@@ -45,11 +46,9 @@ export function createBetterAuth(params: BetterAuthFactoryParams) {
     },
     plugins: [
       admin(),
-      apiKey(),
+      apiKey() as BetterAuthPlugin,
       ...(params.plugins ?? []),
-      openAPI({
-        disableDefaultReference: true,
-      }),
+      openAPI({ disableDefaultReference: true }),
     ],
     secret: params.secret,
     baseURL: params.baseUrl,
@@ -65,5 +64,16 @@ export function createBetterAuth(params: BetterAuthFactoryParams) {
     },
     // Enable experimental join queries for eager-loading user relations in a single query
     experimental: { joins: true },
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            if (params.onUserCreated) {
+              await params.onUserCreated(user.id);
+            }
+          },
+        },
+      },
+    },
   } satisfies BetterAuthOptions);
 }
