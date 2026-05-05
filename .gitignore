@@ -403,4 +403,4 @@ src/metadata.ts
 .worktrees/
 .claude/worktrees/
 uploads/
-.claude/settings.local.json
+.claude/settings.local.json.worktrees/
