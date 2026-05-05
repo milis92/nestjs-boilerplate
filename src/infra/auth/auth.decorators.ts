@@ -1,132 +1,78 @@
 import {
   createParamDecorator,
-  ExecutionContext,
+  type ExecutionContext,
   SetMetadata,
 } from '@nestjs/common';
 import { getSession } from 'better-auth/api';
-import { Request as ExpressRequest } from 'express';
+import type { Request as ExpressRequest } from 'express';
 import { GqlExecutionContext } from '@nestjs/graphql';
 
+/** Metadata key used by AuthGuard to allow unauthenticated access to a route. */
+export const ALLOW_ANONYMOUS = 'allow-anonymous';
+
 /**
- * Decorator to allow anonymous access to a route.
- * Bypasses authentication requirements for the decorated route or controller.
+ * Marks a route or controller as publicly accessible.
+ * The AuthGuard skips session validation entirely for decorated handlers.
  *
  * @example
  * ```typescript
  * @AuthAllowAnonymous()
  * @Get('public')
- * getPublicData() {
- *   return { message: 'This is public' };
- * }
+ * getPublicData() { ... }
  * ```
  */
-export const ALLOW_ANONYMOUS = 'allow-anonymous';
 export const AuthAllowAnonymous = () =>
   SetMetadata(ALLOW_ANONYMOUS, true);
 
+/** Metadata key used by AuthGuard to allow access with or without a session. */
+export const OPTIONAL_AUTH = 'optional-betterAuth';
+
 /**
- * Decorator to make authentication optional for a route.
- * The route will work with or without authentication, allowing conditional logic based on user session.
+ * Marks a route as accessible with or without authentication.
+ * The AuthGuard attaches the session if one is present, but does not throw
+ * when no session exists.
  *
  * @example
  * ```typescript
- * @AuthOptionalAuth()
+ * @AuthOptional()
  * @Get('content')
- * getContent(@AuthSession() session?: UserSession) {
- *   if (session) {
- *     return { message: 'Personalized content' };
- *   }
- *   return { message: 'Generic content' };
- * }
+ * getContent(@AuthSession() session: UserSession | null) { ... }
  * ```
  */
-export const OPTIONAL_AUTH = 'optional-betterAuth';
 export const AuthOptional = () => SetMetadata(OPTIONAL_AUTH, true);
 
 type UserSessionType = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getSession>>>
 >;
 
-/**
- * Session associated with the current authenticated user
- * Contains user information, session metadata, and request headers for additional context.
- */
-export type UserSession = UserSessionType & {
-  headers: ExpressRequest['headers'];
-};
+/** Session and user data returned by BetterAuth for the current authenticated request. */
+export type UserSession = UserSessionType;
 
-type ReqWithSession = ExpressRequest & { session?: UserSessionType };
+/** The authenticated user's data extracted from the BetterAuth session. */
+export type AuthUser = UserSessionType['user'];
 
 /**
- * Parameter decorator to extract the authenticated user's session from the request.
+ * Parameter decorator that extracts the full BetterAuth session from the request.
  * Works with both HTTP (REST) and GraphQL execution contexts.
- *
- * When called without arguments, returns the full UserSession object (or null if unauthenticated).
- * When called with a property name, returns only that specific property from the session.
+ * Returns `null` when the route is unauthenticated (e.g. decorated with `@AuthOptional()`).
  *
  * @example
  * ```typescript
- * // Get the full session object
- * @Get('profile')
- * getProfile(@AuthSession() session: UserSession) {
- *   return { userId: session.user.id };
- * }
- *
- * // Get only the user object from the session
- * @Get('user')
- * getUser(@AuthSession('user') user: UserSession['user']) {
- *   return user;
- * }
- *
- * // Get the request headers
- * @Get('headers')
- * getHeaders(@AuthSession('headers') headers: UserSession['headers']) {
- *   return headers;
+ * @Get('me')
+ * getMe(@AuthSession() session: UserSession) {
+ *   return session.user.id;
  * }
  * ```
  */
 export const AuthSession = createParamDecorator(
-  (
-    data: keyof UserSessionType | 'headers' | undefined,
-    context: ExecutionContext,
-  ) => {
-    const contextType = context.getType<'http' | 'graphql'>();
-
-    let request: ReqWithSession;
-
-    if (contextType === 'graphql') {
-      const gqlCtx = GqlExecutionContext.create(context);
-      request = gqlCtx.getContext<{ req: ExpressRequest }>()?.req;
-    } else {
-      request = context.switchToHttp().getRequest();
-    }
-
-    // If no session exists (unauthenticated), return null instead of exploding
-    const session = request?.session;
-
-    if (!data) {
-      return session
-        ? ({
-            ...session,
-            headers: request.headers,
-          } satisfies UserSession)
-        : null;
-    }
-
-    if (data === 'headers') return request.headers;
-
-    return session?.[data] ?? null;
-  },
+  (_: unknown, context: ExecutionContext): UserSession | null =>
+    getRequest(context)?.session ?? null,
 );
 
 /**
- * The authenticated user's data from the BetterAuth session.
- */
-export type AuthUser = UserSessionType['user'];
-
-/**
  * Parameter decorator that extracts the authenticated user from the request session.
- * Shorthand for `@AuthSession('user')`.
+ * Shorthand for reading `session.user`. Works with both HTTP and GraphQL contexts.
+ * Returns `null` when the route is unauthenticated.
  *
  * @example
  * ```typescript
@@ -137,18 +83,20 @@ export type AuthUser = UserSessionType['user'];
  * ```
  */
 export const CurrentUser = createParamDecorator(
-  (_data: unknown, context: ExecutionContext) => {
-    const contextType = context.getType<'http' | 'graphql'>();
-
-    let request: ReqWithSession;
-
-    if (contextType === 'graphql') {
-      const gqlCtx = GqlExecutionContext.create(context);
-      request = gqlCtx.getContext<{ req: ExpressRequest }>()?.req;
-    } else {
-      request = context.switchToHttp().getRequest();
-    }
-
-    return request?.session?.user ?? null;
-  },
+  (_: unknown, context: ExecutionContext): AuthUser | null =>
+    getRequest(context)?.session?.user ?? null,
 );
+
+type ReqWithSession = ExpressRequest & { session?: UserSessionType };
+
+/** Extracts the Express request from either an HTTP or GraphQL execution context. */
+function getRequest(
+  context: ExecutionContext,
+): ReqWithSession | undefined {
+  if (context.getType<'http' | 'graphql'>() === 'graphql') {
+    return GqlExecutionContext.create(context).getContext<{
+      req: ReqWithSession;
+    }>()?.req;
+  }
+  return context.switchToHttp().getRequest<ReqWithSession>();
+}
