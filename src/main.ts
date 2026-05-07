@@ -24,7 +24,7 @@ async function bootstrap() {
 
   await configure(app, appConfig);
 
-  await app.listen(appConfig.port, '0.0.0.0');
+  await app.listen(appConfig.port, appConfig.host);
   return app;
 }
 

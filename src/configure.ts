@@ -13,6 +13,7 @@ import { Logger, LoggerErrorInterceptor } from 'nestjs-pino';
 import { AppConfig, Environment } from '@/config/app.config';
 import { OpenApiService } from '@/tools/openapi/openapi.service';
 import helmet from 'helmet';
+import type { NextFunction, Request, Response } from 'express';
 
 export async function configure(
   app: INestApplication,
@@ -86,6 +87,15 @@ export async function configure(
     ],
     credentials: true,
   });
+
+  // In development, redirect root to the API docs so the portless URL is useful.
+  if (appConfig.environment === Environment.Development) {
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.path === '/')
+        return res.redirect(appConfig.globalRoutePrefix + '/docs');
+      next();
+    });
+  }
 
   // Enable graceful shutdown for zero-downtime deployments in non-development environments.
   if (appConfig.environment !== Environment.Development) {

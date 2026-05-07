@@ -105,8 +105,13 @@ export class AppConfig {
   @IsNumber()
   @Min(0)
   @Max(65535)
-  @Expose({ name: 'APP_PORT' })
+  @Expose({ name: 'PORT' })
   port: number = 3000;
+
+  @IsOptional()
+  @IsString()
+  @Expose({ name: 'HOST' })
+  host: string = '0.0.0.0';
 
   @IsOptional()
   @IsString()

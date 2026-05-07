@@ -1,0 +1,4 @@
+{
+  "name": "nestjs-backend",
+  "script": "start:dev"
+}
