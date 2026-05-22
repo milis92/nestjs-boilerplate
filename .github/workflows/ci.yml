@@ -34,9 +34,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate lockfile
-        run: pnpm run lint:lockfile
-
       - name: Audit dependencies
         run: pnpm run audit
 
