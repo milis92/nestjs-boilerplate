@@ -56,12 +56,7 @@ export async function configure(
     helmet({
       contentSecurityPolicy: {
         directives: {
-          defaultSrc: [`'self'`],
-          styleSrc: [`'self'`],
-          fontSrc: [`'self'`],
-          imgSrc: [`'self'`, 'data:'],
-          scriptSrc: [`'self'`],
-          connectSrc: [`'self'`],
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         },
       },
     }),
@@ -87,15 +82,6 @@ export async function configure(
     ],
     credentials: true,
   });
-
-  // In development, redirect root to the API docs so the portless URL is useful.
-  if (appConfig.environment === Environment.Development) {
-    app.use((req: Request, res: Response, next: NextFunction) => {
-      if (req.path === '/')
-        return res.redirect(appConfig.globalRoutePrefix + '/docs');
-      next();
-    });
-  }
 
   // Enable graceful shutdown for zero-downtime deployments in non-development environments.
   if (appConfig.environment !== Environment.Development) {
