@@ -35,7 +35,7 @@ export class TestApplicationContext {
     const config = app.get(ConfigService);
     const appConfig = config.get<AppConfig>('application')!;
 
-    await configure(app, appConfig);
+    configure(app, appConfig);
     await app.init();
 
     return new TestApplicationContext(app, ctx);

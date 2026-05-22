@@ -22,7 +22,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const appConfig = config.get<AppConfig>('application')!;
 
-  await configure(app, appConfig);
+  configure(app, appConfig);
 
   await app.listen(appConfig.port, appConfig.host);
   return app;

@@ -3,7 +3,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import { Request, Response } from 'express';
 import docsConfig, { DocsConfig } from '@/config/docs.config';
-import metadata from '@/metadata';
 
 @Injectable()
 export class OpenApiService {
@@ -15,9 +14,7 @@ export class OpenApiService {
     private readonly config: DocsConfig,
   ) {}
 
-  async setup(app: INestApplication): Promise<void> {
-    await SwaggerModule.loadPluginMetadata(metadata);
-
+  setup(app: INestApplication): void {
     const swaggerConfig = new DocumentBuilder()
       .setTitle(this.config.title)
       .setDescription(this.config.description)

@@ -14,7 +14,7 @@ import { AppConfig, Environment } from '@/config/app.config';
 import { OpenApiService } from '@/tools/openapi/openapi.service';
 import helmet from 'helmet';
 
-export async function configure(
+export function configure(
   app: INestApplication,
   appConfig: AppConfig,
 ) {
@@ -93,7 +93,7 @@ export async function configure(
     const openApiService = moduleRef.get(OpenApiService, {
       strict: false,
     });
-    await openApiService.setup(app);
+    openApiService.setup(app);
   } catch {
     // OpenapiModule not registered (non-development environment), skip
   }

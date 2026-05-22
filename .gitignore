@@ -396,7 +396,6 @@ Temporary Items
 # Local
 .env
 dist
-src/metadata.ts
 .webpack
 .serverless/**/*.zip
 /docs/superpowers
