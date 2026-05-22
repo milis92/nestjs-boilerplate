@@ -49,7 +49,7 @@
     "@nestjs/cache-manager": "3.1.0",
     "@nestjs/common": "11.1.10",
     "@nestjs/config": "4.0.2",
-    "@nestjs/core": "11.1.10",
+    "@nestjs/core": "11.1.19",
     "@nestjs/graphql": "13.2.3",
     "@nestjs/platform-express": "11.1.10",
     "@nestjs/swagger": "11.2.3",
