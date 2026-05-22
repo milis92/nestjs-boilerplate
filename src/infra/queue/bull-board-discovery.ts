@@ -35,6 +35,7 @@ export class BullBoardDiscovery implements OnModuleInit {
 
     for (const wrapper of this.discovery.getProviders()) {
       if (wrapper.instance instanceof Queue) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.board.addQueue(new BullMQAdapter(wrapper.instance));
       }
     }

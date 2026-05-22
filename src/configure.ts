@@ -13,7 +13,6 @@ import { Logger, LoggerErrorInterceptor } from 'nestjs-pino';
 import { AppConfig, Environment } from '@/config/app.config';
 import { OpenApiService } from '@/tools/openapi/openapi.service';
 import helmet from 'helmet';
-import type { NextFunction, Request, Response } from 'express';
 
 export async function configure(
   app: INestApplication,
