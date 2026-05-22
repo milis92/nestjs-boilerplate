@@ -42,7 +42,7 @@
     "@bull-board/nestjs": "6.20.5",
     "@dotenvx/dotenvx": "1.52.0",
     "@keyv/redis": "5.1.5",
-    "@nest-lab/throttler-storage-redis": "1.1.0",
+    "@nest-lab/throttler-storage-redis": "1.2.0",
     "@nestjs/apollo": "13.2.3",
     "@nestjs/axios": "4.0.1",
     "@nestjs/bullmq": "11.0.4",
