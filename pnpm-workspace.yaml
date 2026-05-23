@@ -41,6 +41,9 @@ minimumReleaseAgeExclude:
   - 'axios@1.16.1'
   - 'fast-uri@3.1.2'
   - 'kysely@0.28.17'
+  # Intentional upgrade to 1.0.0-rc.3; reviewed and safe
+  - 'drizzle-orm@1.0.0-rc.3'
+  - 'drizzle-kit@1.0.0-rc.3'
 
 # SECURITY: reject a version whose publishing trust signals regressed
 trustPolicy: no-downgrade
