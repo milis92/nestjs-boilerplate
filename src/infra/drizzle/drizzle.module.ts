@@ -14,14 +14,10 @@ import databaseConfig, {
 import { DrizzleHealthCheckIndicator } from './drizzle.health';
 import { DrizzleCacheStore } from './drizzle-cache.store';
 
-import * as schema from './schema';
 import { relations } from './relations';
 
 /** Drizzle ORM database instance with schema and relations. */
-export type DrizzleDatabase = NodePgDatabase<
-  typeof schema,
-  typeof relations
->;
+export type DrizzleDatabase = NodePgDatabase<typeof relations>;
 
 export const DRIZZLE_DB = Symbol('DRIZZLE_DB');
 export const InjectDrizzle = () => Inject(DRIZZLE_DB);
@@ -77,7 +73,6 @@ function createPool(config: DatabaseConfig): Pool {
       ): DrizzleDatabase =>
         drizzle({
           client: pool,
-          schema,
           relations,
           cache: new DrizzleCacheStore(cacheManager),
         }),
