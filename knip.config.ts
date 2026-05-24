@@ -5,6 +5,8 @@ const config: KnipConfig = {
     '.claude/**',
     // Used by `pnpm dlx @better-auth/cli migrate` as the auth config entry point — not imported by TS
     'auth.ts',
+    // Utility planned for future use — no importers yet
+    'src/domain/shared/helpers/enum-object.ts',
   ],
 
   ignoreDependencies: [
