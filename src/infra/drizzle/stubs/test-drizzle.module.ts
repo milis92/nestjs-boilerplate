@@ -12,7 +12,6 @@ import {
   type DrizzleDatabase,
 } from '@/infra/drizzle/drizzle.module';
 import { DrizzleCacheStore } from '@/infra/drizzle/drizzle-cache.store';
-import * as schema from '@/infra/drizzle/schema';
 import { relations } from '@/infra/drizzle/relations';
 
 export interface PostgresConnectionConfig {
@@ -53,7 +52,6 @@ export class TestDrizzleModule implements OnModuleDestroy {
           ): DrizzleDatabase =>
             drizzle({
               client: pool,
-              schema,
               relations,
               cache: new DrizzleCacheStore(cacheManager, 300_000),
             }),

@@ -1,0 +1,22 @@
+# Validate content before committing
+pre-commit:
+  jobs:
+    - name: format
+      run: pnpm exec prettier --write {staged_files}
+      glob:
+        - '**/*.ts'
+        - '**/*.mts'
+        - '**/*.mjs'
+      stage_fixed: true
+    - name: lint
+      run: pnpm exec eslint --max-warnings 0 {staged_files}
+      glob:
+        - '**/*.ts'
+      stage_fixed: true
+    - name: typecheck
+      run: pnpm typecheck
+    - name: knip
+      glob: '*'
+      run: pnpm run check:deps
+    - name: test
+      run: pnpm test

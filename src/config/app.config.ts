@@ -18,9 +18,7 @@ import { IsCorsOrigin } from '@/config/utils/cors.validator';
 
 export enum Environment {
   Development = 'development',
-  Staging = 'staging',
   Production = 'production',
-  Test = 'test',
 }
 
 export enum LogCollector {
