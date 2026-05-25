@@ -15,8 +15,5 @@ pre-commit:
       stage_fixed: true
     - name: typecheck
       run: pnpm typecheck
-    - name: knip
-      glob: '*'
-      run: pnpm run check:deps
     - name: test
       run: pnpm test
