@@ -59,7 +59,7 @@
     "@scalar/nestjs-api-reference": "1.0.13",
     "@tygra/nestjs-graceful-shutdown": "2.0.0",
     "@types/express": "5.0.6",
-    "ai": "7.0.0-beta.15",
+    "ai": "7.0.0-canary.131",
     "better-auth": "1.5.5",
     "bullmq": "5.71.0",
     "cache-manager": "7.2.8",
