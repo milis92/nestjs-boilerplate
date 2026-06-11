@@ -82,7 +82,7 @@
   "devDependencies": {
     "@better-auth/cli": "1.4.21",
     "@eslint/eslintrc": "3.3.5",
-    "@eslint/js": "9.39.2",
+    "@eslint/js": "10.0.1",
     "@nestjs/cli": "11.0.21",
     "@nestjs/schematics": "11.0.9",
     "@nestjs/testing": "11.1.19",
