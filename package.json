@@ -38,7 +38,7 @@
     "@apollo/server": "5.4.0",
     "@as-integrations/express5": "1.1.2",
     "@better-auth/api-key": "1.5.5",
-    "@bull-board/api": "6.20.5",
+    "@bull-board/api": "7.0.0",
     "@bull-board/express": "6.20.5",
     "@bull-board/nestjs": "6.20.5",
     "@dotenvx/dotenvx": "1.52.0",
