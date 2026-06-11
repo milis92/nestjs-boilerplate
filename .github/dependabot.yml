@@ -8,9 +8,21 @@ updates:
     cooldown:
       default-days: 30
     commit-message:
-      prefix: "chore(deps)"
+      prefix: 'chore(deps)'
     allow:
       - dependency-type: direct
+    # The ai-sdk packages are intentionally on the beta channel. Semver sorts
+    # "canary" above "beta", so without these rules Dependabot proposes canary
+    # builds. Ranges end at the stable release so it still picks that up.
+    ignore:
+      - dependency-name: 'ai'
+        versions: ['>=7.0.0-canary.0 <7.0.0']
+      - dependency-name: '@ai-sdk/openai'
+        versions: ['>=4.0.0-canary.0 <4.0.0']
+      - dependency-name: '@ai-sdk/anthropic'
+        versions: ['>=4.0.0-canary.0 <4.0.0']
+      - dependency-name: '@ai-sdk/google'
+        versions: ['>=4.0.0-canary.0 <4.0.0']
     groups:
       patch:
         update-types:
@@ -26,7 +38,7 @@ updates:
     cooldown:
       default-days: 30
     commit-message:
-      prefix: "chore(deps)"
+      prefix: 'chore(deps)'
     groups:
       patch:
         update-types:
