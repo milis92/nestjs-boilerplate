@@ -19,7 +19,7 @@ import {
   mkdirSync,
   rmSync,
 } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import {
   isOwnedPath,
   mergePackageJson,
@@ -52,8 +52,11 @@ function gitOk(args) {
 }
 function fileAt(rev, path) {
   try {
+    // stderr ignored: a missing path (file absent at this rev) is a normal
+    // signal we report as null, not an error to surface as a scary "fatal:".
     return execFileSync('git', ['show', `${rev}:${path}`], {
       encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
     });
   } catch {
     return null;
@@ -180,7 +183,9 @@ function writeTmp(path, suffix, content) {
   const p = join(TMP, `${path}.${suffix}`);
   mkdirSync(dirname(p), { recursive: true });
   writeFileSync(p, content);
-  return p;
+  // Absolute: conflicts.json is consumed by reconciliation subagents that do
+  // not share this engine's working directory, so relative paths would break.
+  return resolve(p);
 }
 
 for (const { status, path } of entries) {
