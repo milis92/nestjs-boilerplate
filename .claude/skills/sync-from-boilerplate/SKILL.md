@@ -57,16 +57,23 @@ Read `.git/boilerplate-sync/conflicts.json`. It is an array of:
 { "path": "<target file>", "base": "<tmp>", "fork": "<tmp>", "boilerplate": "<tmp>", "kind": "three-way" }
 ```
 
-- `base` is null for `kind: "two-way"` (no common ancestor) — merge fork vs boilerplate.
+Any of `base`/`fork`/`boilerplate` may be **null**, meaning that version does not
+exist — only include the versions that are non-null when you build the prompt:
+
+- `base` is null for `kind: "two-way"` (no common ancestor) — reconcile fork vs
+  boilerplate without a base.
 - `boilerplate` is null for `kind: "deleted-upstream"` (the boilerplate deleted a
-  file the fork modified) — decide whether to keep the fork's file or delete it;
-  do not guess, surface the choice in your summary.
+  file the fork modified) — there is nothing to merge in; decide whether to keep
+  the fork's file or delete it. Do not guess — surface the choice in your summary
+  rather than dispatching a merge subagent.
 
-**Dispatch one subagent per conflict, in parallel.** Give each subagent this task,
-substituting the real paths:
+**Dispatch one subagent per mergeable conflict, in parallel.** For each conflict,
+build the prompt from the template below but **omit any line whose path is null**
+(e.g. drop the BASE line for a `two-way` conflict):
 
-> You are reconciling one file during a boilerplate→fork sync. Read these three
-> versions:
+> You are reconciling one file during a boilerplate→fork sync. Read these
+> versions (each path that is given exists; treat any version not listed as
+> absent):
 > - BASE (common ancestor): `<base path>`
 > - FORK (current, keep its intent): `<fork path>`
 > - BOILERPLATE (upstream, bring in its improvement): `<boilerplate path>`
@@ -81,7 +88,9 @@ Collect each subagent's one-line note for the final report.
 
 ## Step 3 — Regenerate the lockfile (only if package.json changed)
 
-If the summary said `package.json : field-merged`:
+If the engine's summary reported the `package.json` line as `field-merged`
+(check `pkgChanged` in `report.json` for a reliable signal, rather than matching
+the printed spacing):
 
 ```bash
 pnpm install
