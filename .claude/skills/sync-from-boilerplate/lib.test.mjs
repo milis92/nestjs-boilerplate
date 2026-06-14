@@ -81,3 +81,54 @@ test('mergePackageJson: tolerates missing dependency blocks', () => {
   assert.equal(merged.name, 'fork');
   assert.equal(merged.dependencies.x, '1.0.0');
 });
+
+import { sharedPackageJsonAdvisory } from './lib.mjs';
+
+test('sharedPackageJsonAdvisory: reports only differing keys present in BOTH sides', () => {
+  const fork = {
+    name: 'my-product-api',
+    version: '2.0.0',
+    scripts: {
+      build: 'nest build', // shared, changed
+      'my:deploy': 'fly deploy', // fork-only -> must NOT appear
+      lint: 'eslint .', // shared, identical -> must NOT appear
+    },
+    devDependencies: {
+      eslint: '10.0.0', // shared, changed
+      'fork-only-tool': '1.0.0', // fork-only -> must NOT appear
+      prettier: '3.0.0', // shared, identical -> must NOT appear
+    },
+  };
+  const boilerplate = {
+    name: 'nestjs-boilerplate',
+    version: '0.1.0',
+    scripts: {
+      build: 'nest build --webpack', // shared, changed
+      lint: 'eslint .',
+      'db:migrate': 'drizzle migrate', // boilerplate-only -> must NOT appear
+    },
+    devDependencies: {
+      eslint: '9.0.0',
+      prettier: '3.0.0',
+    },
+  };
+
+  const adv = sharedPackageJsonAdvisory(fork, boilerplate);
+
+  assert.deepEqual(adv.scripts, {
+    build: {
+      fork: 'nest build',
+      boilerplate: 'nest build --webpack',
+    },
+  });
+  assert.deepEqual(adv.devDependencies, {
+    eslint: { fork: '10.0.0', boilerplate: '9.0.0' },
+  });
+  assert.equal('name' in adv.scripts, false);
+  assert.equal('name' in adv.devDependencies, false);
+});
+
+test('sharedPackageJsonAdvisory: tolerates missing blocks and returns empty maps', () => {
+  const adv = sharedPackageJsonAdvisory({ name: 'a' }, { name: 'b' });
+  assert.deepEqual(adv, { scripts: {}, devDependencies: {} });
+});

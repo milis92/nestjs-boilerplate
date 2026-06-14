@@ -79,3 +79,21 @@ export function mergePackageJson(fork, boilerplate) {
 
   return result;
 }
+
+// Advisory only: which shared scripts / devDependencies differ between fork and
+// boilerplate. "Shared" = a key present in BOTH sides' block, so fork-only deps,
+// boilerplate-only keys, and identity fields never appear. Used to hint at manual
+// upstreaming; never auto-applied to a PR.
+export function sharedPackageJsonAdvisory(fork, boilerplate) {
+  const out = { scripts: {}, devDependencies: {} };
+  for (const block of ['scripts', 'devDependencies']) {
+    const f = fork[block] ?? {};
+    const b = boilerplate[block] ?? {};
+    for (const key of Object.keys(f)) {
+      if (key in b && f[key] !== b[key]) {
+        out[block][key] = { fork: f[key], boilerplate: b[key] };
+      }
+    }
+  }
+  return out;
+}
