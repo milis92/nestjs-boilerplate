@@ -43,9 +43,13 @@ are no candidates, stop and tell the user there's nothing to contribute.
 
 For each candidate, produce a one-line summary of what changed (diff the `fork`
 vs `boilerplate` temp files; for `added`, summarize the new file; for `removed`,
-note the deletion). Present the list and the `package.json` advisory (if any),
-then ask the user which candidates to include and for a short `topic` (used as
-the branch name `sync-up/<topic>`, lowercase kebab).
+note the deletion). **A temp path is `null` when that side has no file** — for
+`added` candidates `boilerplate` is `null` (no upstream version), and for
+`removed` candidates `fork` is `null` (gone from the fork). Don't try to open a
+`null` path; treat it as "absent on that side." Present the list and the
+`package.json` advisory (if any), then ask the user which candidates to include
+and for a short `topic` (used as the branch name `sync-up/<topic>`, lowercase
+kebab).
 
 Do not assume — the user curates. Fork-local customizations that don't belong
 upstream should be left unselected.
@@ -98,13 +102,14 @@ Remove the worktree and temp files whether the PR was created or the user
 aborted:
 
 ```bash
-git worktree remove --force <worktree>
+git worktree remove --force <worktree>   # <worktree> = the path the engine printed in Step 3
 rm -rf .git/boilerplate-contrib
 ```
 
-The local `sync-up/<topic>` branch can be deleted once pushed
-(`git branch -D sync-up/<topic>`); the pushed branch on the boilerplate carries
-the PR.
+`git worktree add -b` created `sync-up/<topic>` in the fork's ref store, so it
+survives the worktree removal. Once the branch is pushed you can delete the local
+copy (`git branch -D sync-up/<topic>`); the pushed branch on the boilerplate
+carries the PR.
 
 ## Gotchas
 
