@@ -36,6 +36,7 @@ node .claude/skills/sync-from-boilerplate/sync.mjs
 ```
 
 The engine:
+
 - refuses to run on a dirty working tree (commit/stash first, so the sync diff
   is the only thing under review),
 - adds/uses a `boilerplate` remote for `milis92/nestjs-boilerplate` and fetches it,
@@ -54,7 +55,13 @@ Read the printed summary and `.git/boilerplate-sync/report.json`.
 Read `.git/boilerplate-sync/conflicts.json`. It is an array of:
 
 ```json
-{ "path": "<target file>", "base": "<tmp>", "fork": "<tmp>", "boilerplate": "<tmp>", "kind": "three-way" }
+{
+  "path": "<target file>",
+  "base": "<tmp>",
+  "fork": "<tmp>",
+  "boilerplate": "<tmp>",
+  "kind": "three-way"
+}
 ```
 
 Any of `base`/`fork`/`boilerplate` may be **null**, meaning that version does not
@@ -102,6 +109,7 @@ leave the merged `package.json` in place and report the failure — do not roll 
 ## Step 4 — Report and stop
 
 Print a final summary for the user:
+
 - counts of clean-applied / deleted / reconciled / skipped (from `report.json`),
 - each reconciliation note from Step 2, clearly flagged for review,
 - any `deleted-upstream` decisions awaiting their call,
