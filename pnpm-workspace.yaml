@@ -8,10 +8,9 @@ savePrefix: ''
 minimumReleaseAge: 43200
 
 # SECURITY: override vulnerable transitive dependencies
-# Resolves CVEs: protobufjs CRITICAL, @isaacs/brace-expansion HIGH, minimatch HIGH ReDoS
+# Resolves CVEs: protobufjs CRITICAL code execution, minimatch HIGH ReDoS
 overrides:
-  protobufjs: 7.5.9
-  '@isaacs/brace-expansion': 5.0.1
+  protobufjs: 7.6.1
   'minimatch@<3.1.3': 3.1.5
   'minimatch@>=5.0.0 <5.1.7': 5.1.9
   # Transitive CVE fixes — batch 2
@@ -21,34 +20,67 @@ overrides:
   'flatted@<3.4.2': '3.4.2'
   'defu@<6.1.5': '6.1.5'
   'lodash@<4.18.0': '4.18.1'
-  'serialize-javascript@<7.0.3': '7.0.3'
   'minimatch@>=9.0.0 <9.0.7': '9.0.7'
   'minimatch@>=10.0.0 <10.2.3': '10.2.3'
-  'vite@>=7.0.0 <7.3.2': '7.3.2'
+  'vite@>=7.0.0 <7.3.5': '7.3.5'
   'kysely@>=0.26.0 <0.28.17': '0.28.17'
   'picomatch@<2.3.2': '2.3.2'
   'picomatch@>=4.0.0 <4.0.4': '4.0.4'
   'fast-uri@<3.1.2': '3.1.2'
   'drizzle-orm@<0.45.2': '0.45.2'
+  # Transitive CVE fixes — batch 3 (HIGH advisories disclosed 2026-06)
+  '@grpc/grpc-js@>=1.14.0 <1.14.4': '1.14.4' # GHSA-5375-pq7m-f5r2, GHSA-99f4-grh7-6pcq — crash via malformed request/compressed message
+  'esbuild@>=0.17.0 <0.28.1': '0.28.1' # dev server can be tricked into returning arbitrary responses
+  'form-data@>=4.0.0 <4.0.6': '4.0.6' # predictable multipart boundary from Math.random
+  'ws@>=8.0.0 <8.21.0': '8.21.0' # DoS via excessive HTTP headers (GHSA-3h5v-q93c-6h6q)
+  'tmp@<0.2.7': '0.2.7' # path traversal via non-string prefix/postfix (supersedes the 0.2.6 pin)
 
-# Direct devDep, published 23 days ago — within 30-day window; reviewed and safe
-# CVE fixes: protobufjs CRITICAL code execution, @isaacs/brace-expansion HIGH resource exhaustion, minimatch HIGH ReDoS
+# SECURITY: allow specific <30-day-old versions forced via overrides to fix CVEs.
+# The 30-day minimumReleaseAge wall would otherwise block these; each is reviewed and safe.
 minimumReleaseAgeExclude:
-  - 'portless@0.12.0'
-  - 'protobufjs@7.5.9'
-  - '@protobufjs/codegen@2.0.5'
   - '@protobufjs/fetch@1.1.1'
   - '@protobufjs/inquire@1.1.2'
-  - '@protobufjs/utf8@1.1.1'
-  # tmp@0.2.6 — security upgrade (high CVE: path traversal via unsanitized prefix/postfix) — via testcontainers
-  - 'tmp@0.2.6'
-  # Security patches — forced via overrides to fix CVEs; reviewed and safe
-  - 'axios@1.16.1'
-  - 'fast-uri@3.1.2'
-  - 'kysely@0.28.17'
   # Intentional upgrade to 1.0.0-rc.3; reviewed and safe
   - 'drizzle-orm@1.0.0-rc.3'
   - 'drizzle-kit@1.0.0-rc.3'
+  # Security patches forced via overrides (batch 3); published <30d ago, reviewed and safe
+  - 'protobufjs@7.6.1'
+  - '@protobufjs/eventemitter@1.1.1' # transitive of protobufjs@7.6.1
+  - 'hasown@2.0.4' # transitive pulled in by the batch-3 re-resolution
+  - '@grpc/grpc-js@1.14.4'
+  - 'form-data@4.0.6'
+  - 'ws@8.21.0'
+  - 'tmp@0.2.7'
+  - 'vite@7.3.5'
+  - 'esbuild@0.28.1'
+  # esbuild ships its platform binary as a per-platform optional dep; the age gate
+  # checks every lockfile entry, so each platform package needs excluding too.
+  - '@esbuild/aix-ppc64@0.28.1'
+  - '@esbuild/android-arm@0.28.1'
+  - '@esbuild/android-arm64@0.28.1'
+  - '@esbuild/android-x64@0.28.1'
+  - '@esbuild/darwin-arm64@0.28.1'
+  - '@esbuild/darwin-x64@0.28.1'
+  - '@esbuild/freebsd-arm64@0.28.1'
+  - '@esbuild/freebsd-x64@0.28.1'
+  - '@esbuild/linux-arm@0.28.1'
+  - '@esbuild/linux-arm64@0.28.1'
+  - '@esbuild/linux-ia32@0.28.1'
+  - '@esbuild/linux-loong64@0.28.1'
+  - '@esbuild/linux-mips64el@0.28.1'
+  - '@esbuild/linux-ppc64@0.28.1'
+  - '@esbuild/linux-riscv64@0.28.1'
+  - '@esbuild/linux-s390x@0.28.1'
+  - '@esbuild/linux-x64@0.28.1'
+  - '@esbuild/netbsd-arm64@0.28.1'
+  - '@esbuild/netbsd-x64@0.28.1'
+  - '@esbuild/openbsd-arm64@0.28.1'
+  - '@esbuild/openbsd-x64@0.28.1'
+  - '@esbuild/openharmony-arm64@0.28.1'
+  - '@esbuild/sunos-x64@0.28.1'
+  - '@esbuild/win32-arm64@0.28.1'
+  - '@esbuild/win32-ia32@0.28.1'
+  - '@esbuild/win32-x64@0.28.1'
 
 # SECURITY: reject a version whose publishing trust signals regressed
 trustPolicy: no-downgrade
@@ -59,10 +91,6 @@ trustPolicyExclude:
   - 'chokidar@4.0.3'
   # Legitimate ownership transfer: isaacs → GitHub npm CLI team (~2022), lukekarrys is a GitHub employee
   - 'semver@6.3.1'
-  # Official nodejs/undici repo, types-only package; both 6.20 and 6.21 published by matteo.collina (Node.js TSC)
-  - 'undici-types@6.21.0'
-  # Security patch override for terser-webpack-plugin transitive; upstream publishes via different account
-  - 'serialize-javascript@7.0.3'
 
 # All build scripts in this project are explicitly blocked. Verified safe by running
 # pnpm install + build + unit + e2e tests with all set to false.
@@ -79,6 +107,15 @@ allowBuilds:
   msgpackr-extract: false # — native C++ addon pulled by bullmq/msgpackr; msgpackr has a pure-JS fallback.
   protobufjs: false # — postinstall prints version scheme warning only. No-op.
   ssh2: false # — native C++ addon pulled by testcontainers; testcontainers works with JS fallback.
+
+# TEMPORARY: ws 7.x DoS (GHSA-96hv-2xvq-fx4p) reaches us only via the deprecated
+# subscriptions-transport-ws (legacy GraphQL subscriptions). The only patch, ws@7.5.11,
+# is <30 days old and pnpm refuses to honor its minimumReleaseAgeExclude. It ages out
+# of the 30-day gate on 2026-06-21 — REMOVE this ignore then and pin ws@>=7.0.0 <7.5.11
+# to 7.5.11 via overrides instead.
+auditConfig:
+  ignoreGhsas:
+    - 'GHSA-96hv-2xvq-fx4p'
 
 # SECURITY: fail the install if a dependency wants to run a build
 # script that isn't in the allow-list above
