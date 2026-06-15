@@ -34,6 +34,10 @@ overrides:
   'form-data@>=4.0.0 <4.0.6': '4.0.6' # predictable multipart boundary from Math.random
   'ws@>=8.0.0 <8.21.0': '8.21.0' # DoS via excessive HTTP headers (GHSA-3h5v-q93c-6h6q)
   'tmp@<0.2.7': '0.2.7' # path traversal via non-string prefix/postfix (supersedes the 0.2.6 pin)
+  # Compatibility (not a CVE): better-auth 1.6.x imports `kAPIErrorHeaderSymbol` from
+  # better-call, added in 1.3.5. The 30-day age gate otherwise resolves the older 1.1.8,
+  # which lacks the export and breaks auth at import time. 1.3.5 is >30d old, so no exclude.
+  'better-call@<1.3.5': '1.3.5'
 
 # SECURITY: allow specific <30-day-old versions forced via overrides to fix CVEs.
 # The 30-day minimumReleaseAge wall would otherwise block these; each is reviewed and safe.
