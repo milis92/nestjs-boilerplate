@@ -1,0 +1,23 @@
+[
+  {"query": "can you go through the open dependabot PRs and merge whatever's safe? a few piled up this week", "should_trigger": true},
+  {"query": "the dependabot PR is red — the audit check is failing again. figure out what's broken and fix it if you can", "should_trigger": true},
+  {"query": "our pnpm-workspace.yaml minimumReleaseAgeExclude list has gotten huge, prune the entries that aren't needed anymore", "should_trigger": true},
+  {"query": "weekly dep housekeeping time — merge the green dependabot bumps and tidy up the overrides", "should_trigger": true},
+  {"query": "the protobufjs override is pinned to a version that just got a CVE, bump it to the patched one", "should_trigger": true},
+  {"query": "dependabot opened a major bump for @apollo/server, take a look but check with me before merging it", "should_trigger": true},
+  {"query": "merge the patch and minor dependency updates please, skip anything major", "should_trigger": true},
+  {"query": "some allowBuilds entries point to packages we removed, reconcile that list against the lockfile", "should_trigger": true},
+  {"query": "there's a dependabot security update open for a high CVE, can you get that merged", "should_trigger": true},
+  {"query": "audit pnpm-workspace.yaml and tell me which trustPolicyExclude and overrides entries are stale", "should_trigger": true},
+
+  {"query": "add the @nestjs/throttler package and wire up rate limiting on the auth routes", "should_trigger": false},
+  {"query": "upgrade us from NestJS 10 to 11 following the migration guide, there are a few breaking changes", "should_trigger": false},
+  {"query": "review PR #28 — it's the new widgets feature, make sure the tests are solid before I merge", "should_trigger": false},
+  {"query": "set up a Dependabot config for our other repo, the Python one with requirements.txt", "should_trigger": false},
+  {"query": "the CI setup action can't find pnpm and the whole workflow won't start, can you look", "should_trigger": false},
+  {"query": "write a script that lists all our direct dependencies with their licenses", "should_trigger": false},
+  {"query": "bump the version in package.json to 2.0.0, we're cutting a release today", "should_trigger": false},
+  {"query": "there's a bug where JWT tokens aren't being validated in the auth guard, fix it", "should_trigger": false},
+  {"query": "pnpm install keeps failing with a peer dependency conflict on @types/node, can you resolve it", "should_trigger": false},
+  {"query": "explain what minimumReleaseAge actually does in our pnpm-workspace.yaml", "should_trigger": false}
+]
