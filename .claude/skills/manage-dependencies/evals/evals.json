@@ -1,0 +1,49 @@
+{
+  "skill_name": "manage-dependencies",
+  "notes": "All prompts are DRY-RUN / read-only: agents report a plan but must not merge, push, commit, or run pnpm install. This keeps the live repo and lockfile untouched during evaluation.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "triage-plan",
+      "prompt": "Take a look at the open Dependabot PRs on this repo and tell me which ones you'd merge and which you wouldn't. Don't actually merge or change anything yet — just walk me through the plan and your reasoning.",
+      "expected_output": "Identifies PR #24 as a minor-group update whose CI (the Audit check) is failing; recommends NOT merging it as-is and instead investigating/fixing the failure first. States the merge policy correctly (patch/minor/security merge when green, majors need confirmation). Does not perform any merge.",
+      "assertions": [
+        {"text": "Identifies PR #24 as the open Dependabot PR", "passed": null, "evidence": ""},
+        {"text": "Notes that #24's checks are failing / not green (Audit check)", "passed": null, "evidence": ""},
+        {"text": "Recommends NOT merging #24 as-is (investigate/fix first), rather than merging", "passed": null, "evidence": ""},
+        {"text": "States the merge policy: patch/minor/security merge when green; major needs explicit confirmation", "passed": null, "evidence": ""},
+        {"text": "Does not actually merge any PR (read-only)", "passed": null, "evidence": ""}
+      ],
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "diagnose-ci",
+      "prompt": "Dependabot PR #24 has a failing check. Figure out what's broken and what the fix would be. Don't push or commit anything — just give me the diagnosis and the proposed fix.",
+      "expected_output": "Determines the failing check is the Audit job (pnpm audit --audit-level high), attributes it to a vulnerable transitive dependency introduced by the bump, and proposes adding/adjusting an overrides entry in pnpm-workspace.yaml as the fix. Read-only — no commit or push.",
+      "assertions": [
+        {"text": "Correctly identifies the failing check as the Audit job (pnpm audit)", "passed": null, "evidence": ""},
+        {"text": "Inspects the actual failing CI log rather than guessing (e.g. gh pr checks / gh run view)", "passed": null, "evidence": ""},
+        {"text": "Names the specific vulnerable package(s) from the audit output", "passed": null, "evidence": ""},
+        {"text": "Proposes a pnpm-workspace.yaml overrides entry as the fix", "passed": null, "evidence": ""},
+        {"text": "Does not commit or push (read-only)", "passed": null, "evidence": ""}
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "prune-workspace",
+      "prompt": "Can you audit pnpm-workspace.yaml and tell me which entries are stale and safe to prune? Don't change anything — just report what you'd remove, what you'd keep, and why.",
+      "expected_output": "Examines all four lists (minimumReleaseAgeExclude, overrides, trustPolicyExclude, allowBuilds) with the right evidence per list: publish-date >30d or lockfile-absence for excludes, tree-resolution for overrides, lockfile-absence for trustPolicyExclude/allowBuilds. Distinguishes proven-removable from keep-because-load-bearing. Does not delete anything or claim removal without evidence.",
+      "assertions": [
+        {"text": "Covers all four lists: minimumReleaseAgeExclude, overrides, trustPolicyExclude, allowBuilds", "passed": null, "evidence": ""},
+        {"text": "Uses publish-date (>30 days) and/or lockfile presence as evidence for minimumReleaseAgeExclude", "passed": null, "evidence": ""},
+        {"text": "Checks lockfile presence (pnpm-lock.yaml) for trustPolicyExclude / allowBuilds orphans", "passed": null, "evidence": ""},
+        {"text": "Treats overrides as risky: requires evidence (tree resolution / audit) before recommending removal", "passed": null, "evidence": ""},
+        {"text": "Separates 'proven removable' from 'keep — still load-bearing' with reasons", "passed": null, "evidence": ""},
+        {"text": "Does not edit or delete anything (read-only)", "passed": null, "evidence": ""}
+      ],
+      "files": []
+    }
+  ]
+}
