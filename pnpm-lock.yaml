@@ -115,8 +115,8 @@ importers:
         specifier: 5.0.6
         version: 5.0.6
       ai:
-        specifier: 7.0.0-beta.111
-        version: 7.0.0-beta.111(zod@4.4.3)
+        specifier: 7.0.0-beta.116
+        version: 7.0.0-beta.116(zod@4.4.3)
       better-auth:
         specifier: 1.6.11
         version: 1.6.11(@prisma/client@5.22.0)(better-sqlite3@12.10.0)(drizzle-kit@1.0.0-rc.3)(drizzle-orm@1.0.0-rc.3(@types/pg@8.20.0)(better-sqlite3@12.10.0)(pg@8.20.0)(zod@4.4.3))(pg@8.20.0)(vitest@4.1.6)
@@ -286,8 +286,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/gateway@4.0.0-beta.62':
-    resolution: {integrity: sha512-gqv1nBV3XVK16NGMO2ea3OAYV2LPYzdIA3xXbF1m6rvPB4O7ZNX22jtQ39YRaVVksxfbj87soYDJ+SHPQBYIaQ==}
+  '@ai-sdk/gateway@4.0.0-beta.67':
+    resolution: {integrity: sha512-qG1a0wwjLL+oVI1LOdpEs74PRl3yNPF5i0CgiuXTbU0Bb+JyUFuSwCJiQvlsIylu/mNpav3Mb+ODj15EF6/NZA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -310,8 +310,18 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
+  '@ai-sdk/provider-utils@5.0.0-beta.30':
+    resolution: {integrity: sha512-X3AxTsFJZr9Mw32SncWJA4/ShU8NA/XjhoallCYdcdQZ2gZZ/cIDyJJ6pNh1aBhicRNHv2ndgI6w/H2NGNIjOA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
   '@ai-sdk/provider@4.0.0-beta.12':
     resolution: {integrity: sha512-/lm60YW/8LJEOmRlKf55is8cXn7eAIgTNN2T/nGnFOaVS5GPvGpUfAVezUfvIZ6hLbUeFuaMNEZLhxXQijHNEQ==}
+    engines: {node: '>=18'}
+
+  '@ai-sdk/provider@4.0.0-beta.14':
+    resolution: {integrity: sha512-SMijtjVHs38n0dMkTcNuGrnStiF76OhAqS0R+ZX4iXUnuPPyTxQoVcF8Xuf2AoBB5rqndTId5FVT05bgqD5KsA==}
     engines: {node: '>=18'}
 
   '@angular-devkit/core@19.2.24':
@@ -2390,8 +2400,8 @@ packages:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
     engines: {node: '>= 6.0.0'}
 
-  ai@7.0.0-beta.111:
-    resolution: {integrity: sha512-dtXAmja2Atwu/0HocfGmMfeuXlFdKmzeFcDup6R621qnKshIRAOLTiABkp/Bs3sXA6yRjJHJzFYlSIF47z/HQQ==}
+  ai@7.0.0-beta.116:
+    resolution: {integrity: sha512-xLVY+YU0sKmQ7zVU6y/6vCFn7o8HHNNgGTK789rqxxmcwSIau/RsmoCzXp/1c6sppA+PU6i4Uh5aCwFAQmjwEA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -4742,8 +4752,8 @@ packages:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
 
-  postcss@8.5.14:
-    resolution: {integrity: sha512-SoSL4+OSEtR99LHFZQiJLkT59C5B1amGO1NzTwj7TT1qCUgUO6hxOvzkOYxD+vMrXBM3XJIKzokoERdqQq/Zmg==}
+  postcss@8.5.15:
+    resolution: {integrity: sha512-FfR8sjd4em2T6fb3I2MwAJU7HWVMr9zba+enmQeeWFfCbm+UOC/0X4DS8XtpUTMwWMGbjKYP7xjfNekzyGmB3A==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -5794,10 +5804,10 @@ snapshots:
       '@ai-sdk/provider-utils': 5.0.0-beta.26(zod@4.4.3)
       zod: 4.4.3
 
-  '@ai-sdk/gateway@4.0.0-beta.62(zod@4.4.3)':
+  '@ai-sdk/gateway@4.0.0-beta.67(zod@4.4.3)':
     dependencies:
-      '@ai-sdk/provider': 4.0.0-beta.12
-      '@ai-sdk/provider-utils': 5.0.0-beta.26(zod@4.4.3)
+      '@ai-sdk/provider': 4.0.0-beta.14
+      '@ai-sdk/provider-utils': 5.0.0-beta.30(zod@4.4.3)
       '@vercel/oidc': 3.2.0
       zod: 4.4.3
 
@@ -5821,7 +5831,19 @@ snapshots:
       eventsource-parser: 3.0.8
       zod: 4.4.3
 
+  '@ai-sdk/provider-utils@5.0.0-beta.30(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.0-beta.14
+      '@standard-schema/spec': 1.1.0
+      '@workflow/serde': 4.1.0
+      eventsource-parser: 3.0.8
+      zod: 4.4.3
+
   '@ai-sdk/provider@4.0.0-beta.12':
+    dependencies:
+      json-schema: 0.4.0
+
+  '@ai-sdk/provider@4.0.0-beta.14':
     dependencies:
       json-schema: 0.4.0
 
@@ -7973,11 +7995,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  ai@7.0.0-beta.111(zod@4.4.3):
+  ai@7.0.0-beta.116(zod@4.4.3):
     dependencies:
-      '@ai-sdk/gateway': 4.0.0-beta.62(zod@4.4.3)
-      '@ai-sdk/provider': 4.0.0-beta.12
-      '@ai-sdk/provider-utils': 5.0.0-beta.26(zod@4.4.3)
+      '@ai-sdk/gateway': 4.0.0-beta.67(zod@4.4.3)
+      '@ai-sdk/provider': 4.0.0-beta.14
+      '@ai-sdk/provider-utils': 5.0.0-beta.30(zod@4.4.3)
       zod: 4.4.3
 
   ajv-formats@2.1.1(ajv@8.20.0):
@@ -10001,7 +10023,7 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss@8.5.14:
+  postcss@8.5.15:
     dependencies:
       nanoid: 3.3.12
       picocolors: 1.1.1
@@ -10885,7 +10907,7 @@ snapshots:
       esbuild: 0.28.1
       fdir: 6.5.0(picomatch@4.0.4)
       picomatch: 4.0.4
-      postcss: 8.5.14
+      postcss: 8.5.15
       rollup: 4.60.4
       tinyglobby: 0.2.16
     optionalDependencies:
