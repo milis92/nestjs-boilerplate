@@ -89,7 +89,7 @@
     "@swc/cli": "0.8.1",
     "@swc/core": "1.15.30",
     "@testcontainers/postgresql": "11.14.0",
-    "@testcontainers/redis": "11.14.0",
+    "@testcontainers/redis": "12.0.1",
     "@types/multer": "2.1.0",
     "@types/node": "25.8.0",
     "@types/pg": "8.20.0",
